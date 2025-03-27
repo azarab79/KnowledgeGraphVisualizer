@@ -1,0 +1,46 @@
+/* 360T Override CSS - Directly replace all blue text with 360T green */
+
+:root {
+  --primary-color: #00973A !important;
+  --primary-light: #4abb7d !important;
+  --primary-dark: #007d30 !important;
+  --info-color: #00973A !important;
+}
+
+/* Override all blue texts */
+a, .nav-button.active, h2, .legend-title, .documentation-content strong {
+  color: #00973A !important;
+}
+
+/* Override all blue backgrounds */
+.button, button.primary, .action-button, .search-button, .retry-button {
+  background-color: #00973A !important;
+}
+
+.button:hover, button.primary:hover, .action-button:hover, .search-button:hover, .retry-button:hover {
+  background-color: #007d30 !important;
+}
+
+/* Override relationships */
+.relationship-badge, .graph-link[stroke="#3b82f6"] {
+  background-color: #00973A !important;
+  stroke: #00973A !important;
+}
+
+/* Override nav button active state */
+.nav-button.active {
+  background-color: rgba(0, 151, 58, 0.1) !important;
+}
+
+/* Override input focus */
+input:focus {
+  border-color: #00973A !important;
+  box-shadow: 0 0 0 3px rgba(0, 151, 58, 0.2) !important;
+}
+
+/* Fix logo */
+.app-logo img {
+  content: url('/src/assets/logos/360T-logo.png') !important;
+  height: 40px !important;
+  width: auto !important;
+} 

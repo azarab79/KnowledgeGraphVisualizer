@@ -1,0 +1,103 @@
+openapi: 3.0.0
+info:
+  title: 360T Knowledge Graph API
+  version: 1.0.0
+  description: API for managing and querying the 360T Knowledge Graph
+
+servers:
+  - url: http://localhost:3002
+    description: Development server
+
+components:
+  schemas:
+    Node:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [Module, Product, Workflow, ConfigurationItem, TestCase, UI_Area]
+        properties:
+          type: object
+    
+    Relationship:
+      type: object
+      properties:
+        fromNode:
+          type: string
+        toNode:
+          type: string
+        type:
+          type: string
+          enum: [IMPLEMENTS, DEPENDS_ON, INTEGRATES_WITH, USES, CONFIGURES, VALIDATES, DISPLAYS, NAVIGATES_TO]
+        properties:
+          type: object
+    
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+            stack:
+              type: string
+
+paths:
+  /api/health:
+    get:
+      summary: Get API health status
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+  
+  /api/graph:
+    get:
+      summary: Get graph data
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+          description: Maximum number of relationships to return
+        - in: query
+          name: nodeTypes
+          schema:
+            type: string
+          description: Comma-separated list of node types to filter by
+      responses:
+        '200':
+          description: Graph data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 

@@ -1,0 +1,237 @@
+/* 360T Corporate Theme */
+:root {
+  --360t-primary: #00973A;      /* 360T green */
+  --360t-primary-dark: #007d30;
+  --360t-secondary: #005920;    /* Dark green (was Deutsche Börse blue) */
+  --360t-text: #333333;
+  --360t-light-gray: #f5f5f5;
+  --360t-mid-gray: #e2e8f0;
+  --360t-dark-gray: #4a5568;
+  --360t-border: #ddd;
+  --360t-white: #ffffff;
+  --360t-shadow: rgba(0, 0, 0, 0.1);
+  
+  /* Override existing variables */
+  --primary-color: var(--360t-primary);
+  --primary-dark: var(--360t-primary-dark);
+  --secondary-color: var(--360t-secondary);
+  --text-color: var(--360t-text);
+  --border-color: var(--360t-border);
+}
+
+/* Typography */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--360t-text);
+  background-color: var(--360t-light-gray);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--360t-text);
+}
+
+/* Header */
+.app-header {
+  background-color: var(--360t-white);
+  box-shadow: 0 2px 4px var(--360t-shadow);
+  padding: 0.75rem 1.5rem;
+}
+
+.app-logo {
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.app-logo img {
+  height: 100%;
+}
+
+.main-nav ul {
+  margin-left: 2rem;
+}
+
+.nav-button {
+  color: var(--360t-dark-gray);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.nav-button:hover {
+  background-color: rgba(0, 151, 58, 0.1);
+}
+
+.nav-button.active {
+  color: var(--360t-primary);
+  background-color: rgba(0, 151, 58, 0.1);
+}
+
+/* Main Content */
+.content-wrapper {
+  padding: 1.5rem;
+}
+
+.content-wrapper h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--360t-mid-gray);
+}
+
+/* Search Form */
+.search-wrapper {
+  background-color: var(--360t-white);
+  border-bottom: 1px solid var(--360t-border);
+  padding: 1.25rem;
+}
+
+.search-input {
+  border: 1px solid var(--360t-mid-gray);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+}
+
+.search-input:focus {
+  border-color: var(--360t-primary);
+  box-shadow: 0 0 0 3px rgba(0, 151, 58, 0.1);
+}
+
+.search-button {
+  background-color: var(--360t-primary);
+  color: white;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.search-button:hover {
+  background-color: var(--360t-primary-dark);
+}
+
+/* Panel Styling */
+.details-panel {
+  background-color: var(--360t-white);
+  border-left: 1px solid var(--360t-border);
+  box-shadow: -2px 0 10px var(--360t-shadow);
+}
+
+.panel-header {
+  background-color: var(--360t-white);
+  border-bottom: 1px solid var(--360t-border);
+}
+
+.panel-header h2 {
+  font-size: 1.25rem;
+  color: var(--360t-text);
+}
+
+.panel-footer {
+  background-color: var(--360t-light-gray);
+  border-top: 1px solid var(--360t-border);
+}
+
+/* Buttons */
+.action-button {
+  background-color: var(--360t-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-button:hover {
+  background-color: var(--360t-primary-dark);
+}
+
+.back-button {
+  background-color: var(--360t-light-gray);
+  color: var(--360t-dark-gray);
+  border: none;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: var(--360t-mid-gray);
+}
+
+/* Legend */
+.legend-container {
+  background-color: var(--360t-white);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--360t-shadow);
+}
+
+.legend-title {
+  color: var(--360t-text);
+  border-bottom: 1px solid var(--360t-mid-gray);
+}
+
+/* Color picker modal */
+.color-picker-modal {
+  background-color: var(--360t-white);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px var(--360t-shadow);
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--360t-mid-gray);
+}
+
+.apply-button {
+  background-color: var(--360t-primary);
+  color: white;
+}
+
+.apply-button:hover {
+  background-color: var(--360t-primary-dark);
+}
+
+.cancel-button {
+  background-color: var(--360t-white);
+  border: 1px solid var(--360t-mid-gray);
+}
+
+/* Analysis tools */
+.tool-button {
+  background-color: var(--360t-white);
+  border: 1px solid var(--360t-mid-gray);
+  border-radius: 4px;
+  padding: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.tool-button:hover {
+  border-color: var(--360t-primary);
+  box-shadow: 0 2px 8px var(--360t-shadow);
+}
+
+.tool-button.active {
+  border-color: var(--360t-primary);
+  box-shadow: 0 0 0 2px rgba(0, 151, 58, 0.2);
+}
+
+/* Loading and errors */
+.loading-spinner {
+  border-top-color: var(--360t-primary);
+}
+
+.error-message {
+  background-color: #fff5f5;
+  border: 1px solid #feb2b2;
+}
+
+.retry-button {
+  background-color: var(--360t-primary);
+  color: white;
+} 

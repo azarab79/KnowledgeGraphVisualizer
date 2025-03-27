@@ -1,0 +1,30 @@
+[
+  {
+    "module": "RFS Live Pricing",
+    "version": "4.17",
+    "workflowCount": 1,
+    "uiAreaCount": 1,
+    "dependencyCount": 0
+  },
+  {
+    "module": "Market Data Service",
+    "version": "3.8",
+    "workflowCount": 0,
+    "uiAreaCount": 0,
+    "dependencyCount": 0
+  },
+  {
+    "module": "Order Management",
+    "version": "5.2",
+    "workflowCount": 0,
+    "uiAreaCount": 0,
+    "dependencyCount": 0
+  },
+  {
+    "module": "Post-Trade Processing",
+    "version": "2.5",
+    "workflowCount": 0,
+    "uiAreaCount": 0,
+    "dependencyCount": 0
+  }
+]
