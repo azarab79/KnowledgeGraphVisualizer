@@ -1,134 +1,44 @@
 # Quick Start Guide - 360T Knowledge Graph
 
-This guide will help you get started with the 360T Knowledge Graph system in under 15 minutes.
+This guide summarizes how to get up and running quickly.
 
-## 1. Quick Installation (5 minutes)
+## Setup
 
-### Install Neo4j
-1. Download Neo4j Desktop from [Neo4j Download Page](https://neo4j.com/download/)
-2. Install and launch Neo4j Desktop
-3. Create a new database:
-   ```
-   Name: 360T-KG
-   Password: your-secure-password
-   Version: 4.4 or higher
-   ```
+- Install Neo4j Desktop, create a database (4.4+).
+- Clone API repo, run `npm install`.
+- Configure `.env` with Neo4j URI and credentials.
+- Start Neo4j and API server (`npm run dev`).
+- Verify with `curl http://localhost:3002/api/health`.
 
-### Install API
-```bash
-git clone https://github.com/your-repo/360t-kg-api.git
-cd 360t-kg-api
-npm install
-cp .env.example .env
-```
+## Initial Exploration
 
-Edit `.env`:
-```env
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=your-secure-password
-```
+- Access Neo4j Browser at `http://localhost:7478`.
+- Run sample queries:
+  - `MATCH (n) RETURN n LIMIT 5;`
+  - `MATCH (m:Module) RETURN m;`
+  - `MATCH (m:Module)-[r]->(n) RETURN m, r, n;`
+  - `MATCH (t:TestCase)-[r:VALIDATES]->(n) RETURN t, r, n;`
 
-## 2. Start the System (2 minutes)
+## Visualizations
 
-1. Start Neo4j:
-   - Open Neo4j Desktop
-   - Click 'Start' on your database
+- View full graph, module dependencies, UI flows with Cypher queries.
+- Use LIMIT for large datasets.
 
-2. Start API:
-   ```bash
-   npm run dev
-   ```
+## Tips
 
-3. Verify:
-   ```bash
-   curl http://localhost:3002/api/health
-   # Should return: {"status":"ok"}
-   ```
-
-## 3. First Steps (5 minutes)
-
-### Access Neo4j Browser
-1. Open http://localhost:7478
-2. Login with your Neo4j credentials
-3. Try a simple query:
-   ```cypher
-   MATCH (n) RETURN n LIMIT 5;
-   ```
-
-### Common Operations
-
-1. View all modules:
-   ```cypher
-   MATCH (m:Module)
-   RETURN m;
-   ```
-
-2. View module relationships:
-   ```cypher
-   MATCH (m:Module {name: 'RFS Live Pricing'})
-   OPTIONAL MATCH (m)-[r]->(n)
-   RETURN m, r, n;
-   ```
-
-3. Find test coverage:
-   ```cypher
-   MATCH (t:TestCase)-[r:VALIDATES]->(n)
-   RETURN t, r, n;
-   ```
-
-## 4. Essential Visualizations (3 minutes)
-
-### Basic Graph View
-```cypher
-// View complete graph structure
-MATCH (n)
-OPTIONAL MATCH (n)-[r]->(m)
-RETURN n, r, m;
-```
-
-### Module Dependencies
-```cypher
-// View module with components
-MATCH (m:Module {name: 'RFS Live Pricing'})
-OPTIONAL MATCH (m)-[r1]->(n1)
-RETURN m, r1, n1;
-```
-
-### UI Navigation Flow
-```cypher
-// Show UI navigation paths
-MATCH path = (ui1:UI_Area)-[:NAVIGATES_TO*]->(ui2:UI_Area)
-RETURN path;
-```
-
-## 5. Quick Tips
-
-### Visualization
-- Double-click nodes to expand relationships
-- Shift + double-click to collapse
-- Mouse wheel to zoom
-- Click and drag to move nodes
-
-### Performance
-- Use LIMIT for large queries
-- Add indexes for frequently searched properties
-- Clear the view between visualizations
-
-### Common Issues
-- If Neo4j won't connect, check if it's running
-- For slow queries, use PROFILE to analyze
-- If browser is unresponsive, refresh and use smaller queries
+- Double-click nodes to expand.
+- Use zoom and drag to navigate.
+- Add indexes for performance.
+- Use PROFILE to analyze slow queries.
 
 ## Next Steps
 
-1. Review the [Data Model Guide](./data-model.md) for detailed structure
-2. Check [API Reference](./api-reference.md) for available endpoints
-3. Explore [Query Guide](./query-guide.md) for advanced queries
-4. See [Visualization Guide](./visualization.md) for custom styling
+- Review [Data Model](./data-model.md)
+- Check [API Reference](./api-reference.md)
+- Explore [Query Guide](./query-guide.md)
+- See [Visualization Guide](./visualization.md)
 
-## Quick Support
+## Support
 
-- Technical Issues: [support@360t.com](mailto:support@360t.com)
-- Documentation: [docs@360t.com](mailto:docs@360t.com)
-- Emergency: +1-XXX-XXX-XXXX 
+- Technical: [support@360t.com](mailto:support@360t.com)
+- Docs: [docs@360t.com](mailto:docs@360t.com)

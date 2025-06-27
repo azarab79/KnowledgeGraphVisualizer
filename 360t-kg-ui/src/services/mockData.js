@@ -188,14 +188,20 @@ export const mockInitialGraph = () => {
       { id: '2', labels: ['Module'], properties: { name: 'Module B' } },
       { id: '3', labels: ['TestCase'], properties: { name: 'TestCase C' } },
       { id: '4', labels: ['UI_Area'], properties: { name: 'UI Area D' } },
-      { id: '5', labels: ['ConfigurationItem'], properties: { name: 'Config E' } }
+      { id: '5', labels: ['ConfigurationItem'], properties: { name: 'Config E' } },
+      { id: '6', labels: ['Workflow'], properties: { name: 'Workflow F' } },
+      { id: '7', labels: ['Database'], properties: { name: 'Database G' } },
+      { id: '8', labels: ['Service'], properties: { name: 'Service H' } }
     ],
     links: [
       { id: '1', source: '1', target: '2', type: 'CONTAINS' },
       { id: '2', source: '2', target: '3', type: 'VALIDATES' },
       { id: '3', source: '2', target: '4', type: 'DISPLAYS' },
       { id: '4', source: '1', target: '5', type: 'CONFIGURES_IN' },
-      { id: '5', source: '4', target: '3', type: 'VALIDATES' }
+      { id: '5', source: '4', target: '3', type: 'VALIDATES' },
+      { id: '6', source: '6', target: '2', type: 'EXECUTES' },
+      { id: '7', source: '7', target: '1', type: 'STORES' },
+      { id: '8', source: '8', target: '7', type: 'ACCESSES' }
     ]
   };
 }; 

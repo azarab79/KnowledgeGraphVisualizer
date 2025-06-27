@@ -12,8 +12,8 @@ import {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api';
 
-// Flag to control whether to use mock data
-const USE_MOCK_DATA = false; // Set to false when you want to use real API
+// Flag to control whether to use mock data - ONLY use if explicitly set in .env
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true';
 
 // Flag to enable fallback client-side search
 const ENABLE_CLIENT_SEARCH = true;
@@ -323,11 +323,15 @@ export const getNodeDetails = async (nodeId) => {
       throw new Error('Node not found in response');
     }
     
-    // Format relationships
-    const relationships = data.edges
-      .filter(edge => edge.from === nodeId || edge.to === nodeId)
+    // Use the actual node.id (which might differ from the original nodeId param)
+    const primaryId = node.id || nodeId;
+
+    // Format relationships – use the resolved primaryId to match edges reliably
+    const relationships = (data.edges || [])
+      .filter(edge => edge.from === primaryId || edge.to === primaryId)
       .map(edge => {
-        const isOutgoing = edge.from === nodeId;
+        // Determine direction relative to the primary node ID
+        const isOutgoing = edge.from === primaryId;
         const relatedNodeId = isOutgoing ? edge.to : edge.from;
         const relatedNode = data.nodes.find(n => n.id === relatedNodeId);
         
@@ -345,22 +349,57 @@ export const getNodeDetails = async (nodeId) => {
   }
 
   try {
-    // Since there's no specific endpoint for node details, 
-    // we'll use expand which returns the node and its relationships
-    const data = await fetchWithRetry(`${API_URL}/graph/expand?nodeId=${nodeId}`);
+    // Properly encode the nodeId for URL, handling both numeric IDs and names with spaces/special chars
+    const encodedNodeId = encodeURIComponent(nodeId);
+    const data = await fetchWithRetry(`${API_URL}/graph/expand?nodeId=${encodedNodeId}`);
     
-    // Find the node with the matching ID
-    const node = data.nodes.find(n => n.id === nodeId);
+    // Find the node with the matching ID or name. This is more robust because
+    // the initial node ID might be a name from a URL parameter.
+    // Also check against decoded nodeId in case of URL encoding issues
+    const decodedNodeId = decodeURIComponent(nodeId);
+    
+    const node = data.nodes.find(n => 
+      n.id === nodeId || 
+      n.id === decodedNodeId ||
+      n.properties.name === nodeId || 
+      n.properties.name === decodedNodeId ||
+      n.label === nodeId ||
+      n.label === decodedNodeId
+    );
     
     if (!node) {
-      throw new Error('Node not found in response');
+      // WORKAROUND: If the primary node is not in the expand response, construct it manually.
+      // This handles cases where the expand query only returns neighbors.
+      const relationships = data.edges
+        .filter(edge => edge.from === nodeId || edge.to === nodeId)
+        .map(edge => {
+          const isOutgoing = edge.from === nodeId;
+          const relatedNodeId = isOutgoing ? edge.to : edge.from;
+          const relatedNode = data.nodes.find(n => n.id === relatedNodeId);
+          return {
+            type: edge.label,
+            direction: isOutgoing ? 'outgoing' : 'incoming',
+            node: relatedNode
+          };
+        });
+      
+      return {
+        id: nodeId,
+        properties: { name: nodeId },
+        labels: ['Unknown'],
+        relationships: relationships
+      };
     }
     
-    // Format relationships
-    const relationships = data.edges
-      .filter(edge => edge.from === nodeId || edge.to === nodeId)
+    // Use the actual node.id (which might differ from the original nodeId param)
+    const primaryId = node.id || nodeId;
+
+    // Format relationships – use the resolved primaryId to match edges reliably
+    const relationships = (data.edges || [])
+      .filter(edge => edge.from === primaryId || edge.to === primaryId)
       .map(edge => {
-        const isOutgoing = edge.from === nodeId;
+        // Determine direction relative to the primary node ID
+        const isOutgoing = edge.from === primaryId;
         const relatedNodeId = isOutgoing ? edge.to : edge.from;
         const relatedNode = data.nodes.find(n => n.id === relatedNodeId);
         
@@ -446,18 +485,34 @@ export const runImpactAnalysis = async (nodeId) => {
   }
 
   try {
-    const results = await fetchWithRetry(`${API_URL}/analysis/impact?nodeId=${nodeId}`);
+    const results = await fetchWithRetry(`${API_URL}/graph/expand?nodeId=${nodeId}`);
+    
+    // Transform the results to be compatible with D3, with safety checks
+    const transformedResults = {
+      nodes: (results.nodes || []).map(node => ({ 
+        ...node,
+        label: node.label || node.properties?.name || node.properties?.test_case_id || node.id,
+        group: node.group || node.labels?.[0] || 'Default',
+        labels: node.labels && Array.isArray(node.labels) && node.labels.length > 0 ? node.labels : [(node.group || 'Default')]
+      })),
+      links: (results.edges || []).map(edge => ({
+        ...edge,
+        source: edge.from,
+        target: edge.to,
+        type: edge.label
+      }))
+    };
+    
     // Apply styling to nodes
-    if (results && results.nodes) {
-      results.nodes = applyNodeStyling(results.nodes);
-    }
-    return results;
+    transformedResults.nodes = applyNodeStyling(transformedResults.nodes);
+    
+    return transformedResults;
   } catch (error) {
     console.error('Error running impact analysis:', error);
     // Return minimal data structure
     return {
       nodes: [],
-      edges: []
+      links: []
     };
   }
 };

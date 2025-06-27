@@ -1,0 +1,331 @@
+/* MarkdownRenderer.css - Compact styles for rendered markdown content */
+
+.markdown-content {
+  line-height: 1.2;
+  color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-size: 0.95em;
+  /* Ensure numbers render clearly and consistently */
+  /* font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1; */
+}
+
+/* Headers with reduced margins */
+.markdown-content h1 {
+  font-size: 1.4em;
+  font-weight: 700;
+  margin: 0.3em 0 0.1em 0;
+  color: #1a1a1a;
+  border-bottom: 2px solid #e1e5e9;
+  padding-bottom: 0.05em;
+}
+
+.markdown-content h2 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin: 0.25em 0 0.08em 0;
+  color: #1a1a1a;
+  border-bottom: 1px solid #e1e5e9;
+  padding-bottom: 0.05em;
+}
+
+.markdown-content h3 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin: 0.2em 0 0.05em 0;
+  color: #2c3e50;
+}
+
+.markdown-content h4 {
+  font-size: 1.02em;
+  font-weight: 600;
+  margin: 0.15em 0 0.05em 0;
+  color: #34495e;
+}
+
+.markdown-content h5,
+.markdown-content h6 {
+  font-size: 1em;
+  font-weight: 600;
+  margin: 0.1em 0 0.05em 0;
+  color: #7f8c8d;
+}
+
+/* Paragraphs with minimal margins */
+.markdown-content p {
+  margin: 0.1em 0;
+  text-align: left;
+}
+
+.markdown-content p:first-child {
+  margin-top: 0;
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Text formatting */
+.markdown-content strong {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.markdown-content em {
+  font-style: italic;
+  color: #34495e;
+}
+
+/* Code with reduced padding */
+.markdown-content code {
+  background-color: #f8f9fa;
+  border: 1px solid #e1e5e9;
+  border-radius: 3px;
+  padding: 0.02em 0.15em;
+  font-family: 'SFMono-Regular', 'Monaco', 'Inconsolata', 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.9em;
+  color: #e83e8c;
+}
+
+.markdown-content pre {
+  background-color: #f8f9fa;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  padding: 0.4em;
+  overflow-x: auto;
+  margin: 0.2em 0;
+  line-height: 1.1;
+}
+
+.markdown-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #24292e;
+  font-size: 0.85em;
+}
+
+/* Lists with compact spacing */
+.markdown-content ul,
+.markdown-content ol {
+  margin: 0.15em 0;
+  padding-left: 1.2em;
+}
+
+.markdown-content li {
+  margin: 0.02em 0;
+  line-height: 1.2;
+}
+
+.markdown-content ul li {
+  list-style-type: disc;
+}
+
+.markdown-content ol li {
+  list-style-type: decimal;
+}
+
+.markdown-content ul ul,
+.markdown-content ol ol,
+.markdown-content ul ol,
+.markdown-content ol ul {
+  margin: 0.02em 0;
+}
+
+/* Nested lists */
+.markdown-content ul ul li {
+  list-style-type: circle;
+}
+
+.markdown-content ul ul ul li {
+  list-style-type: square;
+}
+
+/* Blockquotes with reduced spacing */
+.markdown-content blockquote {
+  background-color: #f7f9fc;
+  border-left: 4px solid #0366d6;
+  margin: 0.2em 0;
+  padding: 0.3em 0.5em;
+  font-style: italic;
+  color: #586069;
+  border-radius: 0 4px 4px 0;
+}
+
+.markdown-content blockquote p {
+  margin: 0.05em 0;
+}
+
+.markdown-content blockquote p:first-child {
+  margin-top: 0;
+}
+
+.markdown-content blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* Links */
+.markdown-content a {
+  color: #0366d6;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.markdown-content a:hover {
+  color: #0253aa;
+  border-bottom-color: #0253aa;
+}
+
+/* Horizontal rules with minimal spacing */
+.markdown-content hr {
+  border: none;
+  border-top: 2px solid #e1e5e9;
+  margin: 0.5em 0;
+  opacity: 0.7;
+}
+
+/* Tables with compact spacing */
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.2em 0;
+  font-size: 0.9em;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #d0d7de;
+  padding: 0.2em 0.4em;
+  text-align: left;
+}
+
+.markdown-content th {
+  background-color: #f6f8fa;
+  font-weight: 600;
+}
+
+/* Images */
+.markdown-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 0.2em 0;
+}
+
+/* Emoji support - ensure they render properly */
+.markdown-content {
+  font-variant-emoji: emoji;
+}
+
+/* Special styling for assistant responses */
+.message.assistant .markdown-content {
+  max-width: 100%;
+  font-size: 0.9em;
+}
+
+/* Clickable related questions styling */
+.markdown-content .related-question {
+  display: inline-block;
+  background: #f0f4f8;
+  color: #2c5aa0;
+  padding: 0.3em 0.6em;
+  margin: 0.1em 0.2em 0.1em 0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  border: 1px solid #b8d4f0;
+  transition: all 0.2s ease;
+}
+
+.markdown-content .related-question:hover {
+  background: #e1ecf4;
+  border-color: #a0c4e8;
+  transform: translateY(-1px);
+}
+
+.markdown-content .related-question:active {
+  transform: translateY(0);
+  background: #d0e3f3;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .markdown-content {
+    font-size: 0.9em;
+  }
+  
+  .markdown-content h1 {
+    font-size: 1.3em;
+  }
+  
+  .markdown-content h2 {
+    font-size: 1.15em;
+  }
+  
+  .markdown-content h3 {
+    font-size: 1.05em;
+  }
+  
+  .markdown-content ul,
+  .markdown-content ol {
+    padding-left: 1.2em;
+  }
+  
+  .markdown-content pre {
+    padding: 0.4em;
+  }
+}
+
+/* Dark mode support (if needed) */
+@media (prefers-color-scheme: dark) {
+  .markdown-content {
+    color: #e1e4e8;
+  }
+  
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3 {
+    color: #f0f6fc;
+    border-color: #30363d;
+  }
+  
+  .markdown-content code {
+    background-color: #161b22;
+    border-color: #30363d;
+    color: #f0f6fc;
+  }
+  
+  .markdown-content pre {
+    background-color: #161b22;
+    border-color: #30363d;
+  }
+  
+  .markdown-content blockquote {
+    background-color: #0d1117;
+    border-color: #1f6feb;
+    color: #8b949e;
+  }
+  
+  .markdown-content a {
+    color: #58a6ff;
+  }
+  
+  .markdown-content a:hover {
+    color: #79c0ff;
+  }
+  
+  .markdown-content .related-question {
+    color: #58a6ff;
+  }
+  
+  .markdown-content .related-question:hover {
+    background-color: #0d1117;
+    border-color: #30363d;
+    color: #79c0ff;
+  }
+}
+
+.markdown-content tr:nth-child(even) {
+  background-color: #f6f8fa;
+} 

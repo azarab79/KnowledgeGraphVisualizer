@@ -1,0 +1,103 @@
+flowchart LR
+    %% Define styles
+    classDef primary fill:#00973A,color:white,stroke:#005722,stroke-width:2px
+    classDef secondary fill:#f5f5f5,color:#999,stroke:#ddd,stroke-width:1px
+    classDef processing fill:#e1f5fe,color:#0277bd,stroke:#0277bd,stroke-width:1px
+    classDef storage fill:#fff8e1,color:#ff8f00,stroke:#ff8f00,stroke-width:1px
+    classDef frontend fill:#f3e5f5,color:#7b1fa2,stroke:#7b1fa2,stroke-width:1px
+    
+    %% Data Sources
+    DS1[User guides] :::primary
+    DS2[Cloudera documentation] :::secondary
+    DS3[Salesforce Einstein data] :::secondary
+    DS4[MCP tools documentation] :::secondary
+    DS5[API documentation] :::secondary
+    DS6[Jira tickets] :::secondary
+    DS7[Atlassian wiki content] :::secondary
+    
+    %% Processing Steps
+    P1[Data ingestion & cleaning] :::processing
+    P2[Text chunking with SemanticChunker] :::processing
+    P3[NER & relationship extraction\nLLMGraphTransformer] :::processing
+    P4[Vector embedding creation] :::processing
+    
+    %% Storage
+    S1[(Neo4j database)] :::storage
+    S2[(Vector store)] :::storage
+    
+    %% Query Processing
+    Q1[Hybrid search engine] :::processing
+    Q2[LLM-enhanced query processing] :::processing
+    Q3[Source attribution] :::processing
+    
+    %% Frontend Components
+    F1[Chat interface] :::frontend
+    F2[Source node visualization] :::frontend
+    F3[Document references] :::frontend
+    F4[Graph visualization] :::frontend
+    
+    %% Connections - Data Sources to Processing
+    DS1 --> P1
+    DS2 -.-> P1
+    DS3 -.-> P1
+    DS4 -.-> P1
+    DS5 -.-> P1
+    DS6 -.-> P1
+    DS7 -.-> P1
+    
+    %% Processing Pipeline
+    P1 --> P2
+    P2 --> P3
+    P2 --> P4
+    
+    %% Storage Connections
+    P3 --> S1
+    P4 --> S2
+    
+    %% Query Processing
+    S1 --> Q1
+    S2 --> Q1
+    Q1 --> Q2
+    Q2 --> Q3
+    
+    %% Frontend
+    Q3 --> F1
+    Q3 --> F2
+    Q3 --> F3
+    Q3 --> F4
+    
+    %% Subgraphs for organization
+    subgraph "Data Sources"
+        DS1
+        DS2
+        DS3
+        DS4
+        DS5
+        DS6
+        DS7
+    end
+    
+    subgraph "Data Processing"
+        P1
+        P2
+        P3
+        P4
+    end
+    
+    subgraph "Storage Layer"
+        S1
+        S2
+    end
+    
+    subgraph "Query Engine"
+        Q1
+        Q2
+        Q3
+    end
+    
+    subgraph "Frontend Visualization"
+        F1
+        F2
+        F3
+        F4
+    end

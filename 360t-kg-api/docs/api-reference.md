@@ -1,514 +1,137 @@
 # API Reference Guide
 
-This guide provides detailed information about the 360T Knowledge Graph API endpoints, authentication, and usage examples.
+This guide provides a detailed reference for the 360T Knowledge Graph API.
 
 ## Authentication
 
-The API uses JWT (JSON Web Token) authentication.
+Authentication is handled via JWT (JSON Web Tokens). A valid token must be included in the `Authorization` header for all requests.
 
-### Getting an Access Token
+`Authorization: Bearer <your_jwt_token>`
 
-```http
-POST /api/auth/login
-Content-Type: application/json
+## Graph API (`/api/graph`)
 
-{
-  "username": "your-username",
-  "password": "your-password"
-}
-```
+Provides endpoints for querying and manipulating the knowledge graph data.
 
-Response:
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expires_in": 3600
-}
-```
+### `GET /api/graph/initial`
 
-Use this token in subsequent requests in the Authorization header:
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
+Fetches the initial graph structure to be displayed in the UI.
 
-## API Endpoints
+-   **Description**: Retrieves a default set of nodes and relationships to populate the initial graph visualization. It excludes certain node labels like 'Document' and relationship types like 'MENTIONS' to keep the initial view clean.
+-   **Query Parameters**: None.
+-   **Response**: A JSON object containing `nodes` and `edges` formatted for a graph visualization library (e.g., vis.js).
 
-### Modules
+### `GET /api/graph/search`
 
-#### List All Modules
+Searches for nodes in the graph based on a query term.
 
-```http
-GET /api/modules
-```
+-   **Description**: Performs a case-insensitive search across multiple properties of nodes, such as `name`, `test_case_id`, `id`, and `text`.
+-   **Query Parameters**:
+    -   `term` (string, required): The search term.
+-   **Response**: A JSON object containing an array of `nodes` that match the search term.
 
-Response:
-```json
-{
-  "modules": [
+### `GET /api/graph/expand`
+
+Expands a given node to retrieve its connected nodes and relationships.
+
+-   **Description**: Given a node ID, this endpoint returns the node itself along with all its immediate neighbors and the relationships connecting them.
+-   **Query Parameters**:
+    -   `nodeId` (integer, required): The internal ID of the node to expand.
+-   **Response**: A JSON object containing `nodes` and `edges` connected to the specified node.
+
+### `POST /api/graph/filter`
+
+Retrieves a filtered view of the graph based on specified node labels and relationship types.
+
+-   **Description**: Allows for querying the graph with specific criteria. The request body can specify which node labels and relationship types to include in the result.
+-   **Request Body**:
+    ```json
     {
-      "id": "m1",
-      "name": "RFS Live Pricing",
-      "version": "4.17",
-      "description": "Real-time pricing module for RFS"
+      "nodeLabels": ["Label1", "Label2"],
+      "relationshipTypes": ["TYPE_A", "TYPE_B"]
     }
-  ]
-}
-```
+    ```
+-   **Response**: A JSON object containing the filtered `nodes` and `edges`.
 
-#### Get Module by ID
+## Chat API (`/api/chat`)
 
-```http
-GET /api/modules/{moduleId}
-```
+Handles real-time conversational interactions with the knowledge graph.
 
-Response:
-```json
-{
-  "id": "m1",
-  "name": "RFS Live Pricing",
-  "version": "4.17",
-  "description": "Real-time pricing module for RFS",
-  "components": {
-    "workflows": [...],
-    "ui_areas": [...],
-    "configuration_items": [...]
-  }
-}
-```
+### `POST /api/chat/message`
 
-#### Create Module
+Sends a user's message to the chat pipeline and receives a response.
 
-```http
-POST /api/modules
-Content-Type: application/json
-
-{
-  "name": "New Module",
-  "version": "1.0",
-  "description": "Description of the new module"
-}
-```
-
-#### Update Module
-
-```http
-PUT /api/modules/{moduleId}
-Content-Type: application/json
-
-{
-  "name": "Updated Module Name",
-  "version": "1.1",
-  "description": "Updated description"
-}
-```
-
-#### Delete Module
-
-```http
-DELETE /api/modules/{moduleId}
-```
-
-### Products
-
-#### List All Products
-
-```http
-GET /api/products
-```
-
-Response:
-```json
-{
-  "products": [
+-   **Description**: This is the primary endpoint for the chat feature. It takes a user message and the conversation history, processes it through a Python-based QA pipeline that interacts with the knowledge graph and an LLM, and returns the assistant's answer.
+-   **Request Body**:
+    ```json
     {
-      "id": "p1",
-      "name": "FX Spot",
-      "description": "Foreign Exchange Spot Trading"
+      "message": "What is the status of the new UI module?",
+      "history": [
+        {"role": "user", "content": "Tell me about the project."},
+        {"role": "assistant", "content": "It's a knowledge graph project."}
+      ]
     }
-  ]
-}
-```
+    ```
+-   **Response**: A JSON object containing the `response` message from the assistant and the `updatedHistory`.
 
-#### Get Product by ID
+### `GET /api/chat/history`
 
-```http
-GET /api/products/{productId}
-```
+Retrieves the current conversation history.
 
-#### Create Product
+-   **Description**: Fetches the chat history. In the current implementation, it returns a default initial message.
+-   **Query Parameters**: None.
+-   **Response**: A JSON object with a `history` array.
 
-```http
-POST /api/products
-Content-Type: application/json
+### `DELETE /api/chat/history`
 
-{
-  "name": "New Product",
-  "description": "Description of the new product"
-}
-```
+Clears the current conversation history.
 
-#### Update Product
+-   **Description**: Resets the conversation. In the current implementation, this is a stateless action that returns a confirmation message.
+-   **Query Parameters**: None.
+-   **Response**: A confirmation message.
 
-```http
-PUT /api/products/{productId}
-Content-Type: application/json
+## Analysis API (`/api/analysis`)
 
-{
-  "name": "Updated Product Name",
-  "description": "Updated description"
-}
-```
+Provides endpoints for performing advanced analysis on the knowledge graph.
 
-#### Delete Product
+### `GET /api/analysis/impact`
 
-```http
-DELETE /api/products/{productId}
-```
+Performs an impact analysis starting from a given node.
 
-### Workflows
+-   **Description**: Identifies and returns all nodes and relationships that are downstream from a specified node, showing what is potentially affected by a change to that node. It traces outgoing paths up to 3 levels deep.
+-   **Query Parameters**:
+    -   `nodeId` (integer, required): The internal ID of the node to start the analysis from.
+-   **Response**: A JSON object containing `nodes` and `edges` representing the impact graph.
 
-#### List All Workflows
+### `GET /api/analysis/test-coverage`
 
-```http
-GET /api/workflows
-```
+Finds all test cases that validate a specific component.
 
-#### Get Workflow by ID
+-   **Description**: Given a component's node ID, this endpoint traces back through `VALIDATES` and other relationship types to find all `TestCase` nodes that provide test coverage for it.
+-   **Query Parameters**:
+    -   `nodeId` (integer, required): The internal ID of the component node to check for test coverage.
+-   **Response**: A JSON object containing `nodes` and `edges` showing the test cases and their relationship to the component.
 
-```http
-GET /api/workflows/{workflowId}
-```
+### `GET /api/analysis/dependencies`
 
-#### Create Workflow
+Performs a dependency analysis for a given node.
 
-```http
-POST /api/workflows
-Content-Type: application/json
+-   **Description**: Identifies and returns all nodes and relationships that a specified node depends on. It traces incoming `USES`, `REQUIRES`, `CONTAINS`, and `VALIDATES` relationships.
+-   **Query Parameters**:
+    -   `nodeId` (integer, required): The internal ID of the node to analyze.
+-   **Response**: A JSON object containing `nodes` and `edges` representing the dependency graph.
 
-{
-  "name": "New Workflow",
-  "description": "Description of the workflow",
-  "steps": [
-    {
-      "order": 1,
-      "name": "Step 1",
-      "description": "First step"
-    }
-  ]
-}
-```
+## Settings API (`/api/settings`)
 
-#### Update Workflow
+The `/api/settings` endpoint allows for server-side persistence of user-specific UI configurations.
 
-```http
-PUT /api/workflows/{workflowId}
-Content-Type: application/json
-
-{
-  "name": "Updated Workflow",
-  "description": "Updated description",
-  "steps": [...]
-}
-```
-
-#### Delete Workflow
-
-```http
-DELETE /api/workflows/{workflowId}
-```
-
-### UI Areas
-
-#### List All UI Areas
-
-```http
-GET /api/ui-areas
-```
-
-#### Get UI Area by ID
-
-```http
-GET /api/ui-areas/{uiAreaId}
-```
-
-#### Create UI Area
-
-```http
-POST /api/ui-areas
-Content-Type: application/json
-
-{
-  "name": "New UI Area",
-  "description": "Description of the UI area"
-}
-```
-
-#### Update UI Area
-
-```http
-PUT /api/ui-areas/{uiAreaId}
-Content-Type: application/json
-
-{
-  "name": "Updated UI Area",
-  "description": "Updated description"
-}
-```
-
-#### Delete UI Area
-
-```http
-DELETE /api/ui-areas/{uiAreaId}
-```
-
-### Configuration Items
-
-#### List All Configuration Items
-
-```http
-GET /api/config-items
-```
-
-#### Get Configuration Item by ID
-
-```http
-GET /api/config-items/{configItemId}
-```
-
-#### Create Configuration Item
-
-```http
-POST /api/config-items
-Content-Type: application/json
-
-{
-  "name": "New Config Item",
-  "description": "Description of the config item",
-  "type": "checkbox",
-  "default_value": "true"
-}
-```
-
-#### Update Configuration Item
-
-```http
-PUT /api/config-items/{configItemId}
-Content-Type: application/json
-
-{
-  "name": "Updated Config Item",
-  "description": "Updated description",
-  "type": "checkbox",
-  "default_value": "false"
-}
-```
-
-#### Delete Configuration Item
-
-```http
-DELETE /api/config-items/{configItemId}
-```
-
-### Test Cases
-
-#### List All Test Cases
-
-```http
-GET /api/test-cases
-```
-
-#### Get Test Case by ID
-
-```http
-GET /api/test-cases/{testCaseId}
-```
-
-#### Create Test Case
-
-```http
-POST /api/test-cases
-Content-Type: application/json
-
-{
-  "name": "TC-001",
-  "description": "Test case description",
-  "priority": "High",
-  "type": "Automated"
-}
-```
-
-#### Update Test Case
-
-```http
-PUT /api/test-cases/{testCaseId}
-Content-Type: application/json
-
-{
-  "name": "TC-001",
-  "description": "Updated description",
-  "priority": "Medium",
-  "type": "Manual"
-}
-```
-
-#### Delete Test Case
-
-```http
-DELETE /api/test-cases/{testCaseId}
-```
-
-### Relationships
-
-#### Create Relationship
-
-```http
-POST /api/relationships
-Content-Type: application/json
-
-{
-  "source_id": "node1_id",
-  "source_type": "Module",
-  "target_id": "node2_id",
-  "target_type": "Workflow",
-  "relationship_type": "CONTAINS"
-}
-```
-
-#### Delete Relationship
-
-```http
-DELETE /api/relationships/{relationshipId}
-```
-
-### Graph Queries
-
-#### Get Module Dependencies
-
-```http
-GET /api/graph/module-dependencies/{moduleId}
-```
-
-#### Get Test Coverage
-
-```http
-GET /api/graph/test-coverage/{moduleId}
-```
-
-#### Get UI Navigation Flow
-
-```http
-GET /api/graph/ui-navigation
-```
-
-#### Get Configuration Impact
-
-```http
-GET /api/graph/config-impact/{configItemId}
-```
-
-## Error Handling
-
-The API uses standard HTTP status codes:
-
-- 200: Success
-- 201: Created
-- 400: Bad Request
-- 401: Unauthorized
-- 403: Forbidden
-- 404: Not Found
-- 500: Internal Server Error
-
-Error Response Format:
-```json
-{
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Human readable error message",
-    "details": {
-      "field": "Additional error details"
-    }
-  }
-}
-```
-
-## Rate Limiting
-
-The API implements rate limiting:
-
-- 1000 requests per hour per API key
-- 100 requests per minute per IP address
-
-Rate limit headers:
-```
-X-RateLimit-Limit: 1000
-X-RateLimit-Remaining: 999
-X-RateLimit-Reset: 1623456789
-```
-
-## Pagination
-
-List endpoints support pagination:
-
-```http
-GET /api/modules?page=2&per_page=10
-```
-
-Response includes pagination metadata:
-```json
-{
-  "data": [...],
-  "pagination": {
-    "total": 100,
-    "per_page": 10,
-    "current_page": 2,
-    "last_page": 10,
-    "from": 11,
-    "to": 20
-  }
-}
-```
-
-## Filtering and Sorting
-
-List endpoints support filtering and sorting:
-
-```http
-GET /api/modules?filter[name]=RFS&sort=-created_at
-```
-
-## API Versioning
-
-The API is versioned through the URL:
-
-```http
-GET /api/v1/modules
-```
-
-## Best Practices
-
-1. **Authentication:**
-   - Store tokens securely
-   - Refresh tokens before expiration
-   - Use environment variables for credentials
-
-2. **Error Handling:**
-   - Implement proper error handling
-   - Log API errors for debugging
-   - Display user-friendly error messages
-
-3. **Rate Limiting:**
-   - Implement exponential backoff
-   - Cache responses when possible
-   - Monitor rate limit headers
-
-4. **Performance:**
-   - Use pagination for large datasets
-   - Minimize API calls
-   - Implement caching where appropriate
+-   `GET /api/settings`: Lists all settings configurations (admin).
+-   `POST /api/settings`: Creates a new settings configuration.
+-   `GET /api/settings/:id`: Retrieves a specific settings configuration.
+-   `PUT /api/settings/:id`: Updates a specific settings configuration.
+-   `DELETE /api/settings/:id`: Deletes a specific settings configuration.
 
 ## Support
 
-For API support:
-- Technical Support: [api-support@360t.com](mailto:api-support@360t.com)
-- Documentation Updates: [api-docs@360t.com](mailto:api-docs@360t.com)
-- API Status: [status.360t.com](https://status.360t.com) 
+-   Technical Support: [api-support@360t.com](mailto:api-support@360t.com)
+-   Documentation: [api-docs@360t.com](mailto:api-docs@360t.com)
+-   API Status: [status.360t.com](https://status.360t.com)

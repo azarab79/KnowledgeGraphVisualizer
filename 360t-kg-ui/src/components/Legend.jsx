@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ColorPickerModal from './ColorPickerModal';
+import { useSettings } from '../hooks/useSettings';
 import * as d3 from 'd3';
 
 // Default node type to color mapping
@@ -45,10 +46,16 @@ const defaultNodeSizes = {
  * @param {function} props.onClose - Callback to close the legend
  */
 const Legend = ({ data, initialConfig = {}, onNodeConfigChange, onClose }) => {
-  const [nodeColors, setNodeColors] = useState({ ...defaultNodeColors, ...(initialConfig.colors || {}) });
-  const [relationshipColors, setRelationshipColors] = useState({ ...defaultRelationshipColors, ...(initialConfig.relationshipColors || {}) });
-  const [nodeSizes, setNodeSizes] = useState({ ...defaultNodeSizes, ...(initialConfig.sizes || {}) });
-  const [nodeShapes, setNodeShapes] = useState({ 
+  const { settings, set: setSetting, isReady: settingsReady } = useSettings();
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isNodeType, setIsNodeType] = useState(true);
+  
+  // Get current values from settings service
+  const nodeColors = useMemo(() => ({ ...defaultNodeColors, ...(settings?.nodeColors || {}) }), [settings?.nodeColors]);
+  const relationshipColors = useMemo(() => ({ ...defaultRelationshipColors, ...(settings?.relationshipColors || {}) }), [settings?.relationshipColors]);
+  const relationshipLineStyles = useMemo(() => (settings?.relationshipLineStyles || {}), [settings?.relationshipLineStyles]);
+  const nodeSizes = useMemo(() => ({ ...defaultNodeSizes, ...(settings?.nodeSizes || {}) }), [settings?.nodeSizes]);
+  const nodeShapes = useMemo(() => ({ 
     'Module': 'square',
     'Product': 'triangle',
     'Workflow': 'diamond',
@@ -56,47 +63,10 @@ const Legend = ({ data, initialConfig = {}, onNodeConfigChange, onClose }) => {
     'ConfigurationItem': 'star',
     'TestCase': 'wye',
     'Default': 'circle',
-    ...(initialConfig.shapes || {})
-  });
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [isNodeType, setIsNodeType] = useState(true);
+    ...(settings?.nodeShapes || {})
+  }), [settings?.nodeShapes]);
 
-  // Update local state when initialConfig changes
-  useEffect(() => {
-    // Only update if initialConfig has data
-    if (initialConfig && Object.keys(initialConfig).length > 0) {
-      if (initialConfig.colors && Object.keys(initialConfig.colors).length > 0) {
-        setNodeColors(prevColors => ({
-          ...defaultNodeColors,
-          ...prevColors,
-          ...initialConfig.colors
-        }));
-      }
-      
-      if (initialConfig.sizes && Object.keys(initialConfig.sizes).length > 0) {
-        setNodeSizes(prevSizes => ({
-          ...defaultNodeSizes,
-          ...prevSizes,
-          ...initialConfig.sizes
-        }));
-      }
-      
-      if (initialConfig.shapes && Object.keys(initialConfig.shapes).length > 0) {
-        setNodeShapes(prevShapes => ({
-          ...prevShapes,
-          ...initialConfig.shapes
-        }));
-      }
-      
-      if (initialConfig.relationshipColors && Object.keys(initialConfig.relationshipColors).length > 0) {
-        setRelationshipColors(prevColors => ({
-          ...defaultRelationshipColors,
-          ...prevColors,
-          ...initialConfig.relationshipColors
-        }));
-      }
-    }
-  }, [initialConfig]);
+  // No longer need to sync with initialConfig since we use settings service directly
 
   if (!data || !data.nodes || !data.links) {
     return null;
@@ -139,173 +109,82 @@ const Legend = ({ data, initialConfig = {}, onNodeConfigChange, onClose }) => {
     setIsNodeType(isNode);
   };
 
-  // Handle color change
-  const handleColorChange = (type, color) => {
-    console.log(`Legend: Changing color for ${type} to ${color}`);
+  // New handler for when the modal applies changes
+  const handleModalApply = (type, changes) => {
+    console.log(`Legend: Applying changes from modal for ${type}:`, changes);
     
+    if (!settingsReady) {
+      console.warn('Settings service not ready, skipping changes');
+      handleCloseModal();
+      return;
+    }
+    
+    let configUpdate = {};
+    let needsCallback = false;
+
     if (isNodeType) {
-      // Update local state with the new color
-      const newNodeColors = { ...nodeColors, [type]: color };
-      console.log(`Legend: Setting node colors state:`, newNodeColors);
-      setNodeColors(newNodeColors);
-      
-      // Force direct DOM updates for the badge background color
-      const badgeElements = document.querySelectorAll(`.legend-badge[title="Click to customize"]`);
-      badgeElements.forEach(badge => {
-        if (badge.textContent.startsWith(type)) {
-          console.log(`Legend: Directly updating badge color for ${type} to ${color}`);
-          badge.style.backgroundColor = color;
-        }
-      });
-      
-      // Save to localStorage
-      try {
-        localStorage.setItem('nodeColors', JSON.stringify(newNodeColors));
-        console.log(`Legend: Saved node colors to localStorage:`, newNodeColors);
-      } catch (error) {
-        console.warn('Could not save color preferences to localStorage', error);
+      // Node update
+      if (changes.color) {
+        const newNodeColors = { ...nodeColors, [type]: changes.color };
+        setSetting('nodeColors', newNodeColors);
+        configUpdate.colors = newNodeColors;
+        configUpdate.isColorChange = true;
+        needsCallback = true;
       }
-      
-      // Notify parent component if callback exists
-      if (onNodeConfigChange) {
-        console.log(`Legend: Notifying parent about color change for ${type}`, {
-          colors: newNodeColors,
-          sizes: nodeSizes,
-          shapes: nodeShapes
-        });
-        
-        // Pass color updates to parent component
-        onNodeConfigChange({
-          colors: newNodeColors,
-          sizes: nodeSizes,  // Preserve existing sizes
-          shapes: nodeShapes, // Preserve existing shapes
-          isColorChange: true  // Add flag to indicate this is a color change
-        });
+      if (changes.size !== undefined) {
+        const newNodeSizes = { ...nodeSizes, [type]: changes.size };
+        setSetting('nodeSizes', newNodeSizes);
+        configUpdate.sizes = newNodeSizes;
+        configUpdate.isSizeChange = true;
+        needsCallback = true;
+      }
+      if (changes.shape) {
+        const newNodeShapes = { ...nodeShapes, [type]: changes.shape };
+        setSetting('nodeShapes', newNodeShapes);
+        configUpdate.shapes = newNodeShapes;
+        configUpdate.isShapeChange = true;
+        needsCallback = true;
       }
     } else {
-      // Update local state with the new relationship color
-      const newRelationshipColors = { ...relationshipColors, [type]: color };
-      console.log(`Legend: Setting relationship colors state:`, newRelationshipColors);
-      setRelationshipColors(newRelationshipColors);
-      
-      // Force direct DOM updates for the badge background color
-      const badgeElements = document.querySelectorAll(`.legend-badge.relationship-badge[title="Click to customize"]`);
-      badgeElements.forEach(badge => {
-        if (badge.textContent.startsWith(type.replace(/_/g, ' '))) {
-          console.log(`Legend: Directly updating relationship badge color for ${type} to ${color}`);
-          badge.style.backgroundColor = color;
-        }
-      });
-      
-      // Save to localStorage
-      try {
-        localStorage.setItem('relationshipColors', JSON.stringify(newRelationshipColors));
-        console.log(`Legend: Saved relationship colors to localStorage:`, newRelationshipColors);
-      } catch (error) {
-        console.warn('Could not save relationship color preferences to localStorage', error);
+      // Relationship update (color and line style)
+      if (changes.color) {
+        const newRelationshipColors = { ...relationshipColors, [type]: changes.color };
+        setSetting('relationshipColors', newRelationshipColors);
+        configUpdate.relationshipColors = newRelationshipColors;
+        configUpdate.isColorChange = true;
+        needsCallback = true;
       }
-      
-      // Notify parent component if callback exists
-      if (onNodeConfigChange) {
-        console.log(`Legend: Notifying parent about relationship color change for ${type}`, {
-          relationshipColors: newRelationshipColors
-        });
-        
-        // Pass relationship color updates to parent component 
-        onNodeConfigChange({
-          colors: nodeColors, // Preserve existing node colors
-          sizes: nodeSizes,   // Preserve existing sizes
-          shapes: nodeShapes, // Preserve existing shapes
-          relationshipColors: newRelationshipColors,
-          isColorChange: true  // Add flag to indicate this is a color change
-        });
+      if (changes.shape) { // shape holds line style string for relationships
+        const newLineStyles = { ...relationshipLineStyles, [type]: changes.shape };
+        setSetting('relationshipLineStyles', newLineStyles);
+        configUpdate.relationshipLineStyles = newLineStyles;
+        needsCallback = true;
       }
     }
+
+    // Notify parent component only with the specific changes made
+    if (needsCallback && onNodeConfigChange) {
+      // Always include latest relationshipLineStyles in the update
+      configUpdate.relationshipLineStyles = { ...relationshipLineStyles };
+
+      delete configUpdate.isColorChange; 
+      delete configUpdate.isSizeChange;
+      delete configUpdate.isShapeChange;
+
+      if (Object.keys(configUpdate).length > 0) {
+        console.log(`Legend: Notifying parent with specific changes for ${type}`, configUpdate);
+        onNodeConfigChange(configUpdate);
+      } else {
+        console.log(`Legend: No actual changes detected for ${type}, not notifying parent.`);
+      }
+    }
+
+    // Close the modal
+    handleCloseModal();
   };
 
-  // Handle size change
-  const handleSizeChange = (type, size) => {
-    console.log(`Legend: Changing size for ${type} to ${size}`);
-    console.log('Current nodeSizes before update:', nodeSizes);
-    
-    if (isNodeType) {
-      // Update the size in state
-      const newNodeSizes = { ...nodeSizes, [type]: size };
-      console.log('New nodeSizes after update:', newNodeSizes);
-      
-      setNodeSizes(newNodeSizes);
-      
-      // Save to localStorage
-      try {
-        localStorage.setItem('nodeSizes', JSON.stringify(newNodeSizes));
-        console.log(`Legend: Saved node sizes to localStorage:`, newNodeSizes);
-      } catch (error) {
-        console.warn('Could not save size preferences to localStorage', error);
-      }
-      
-      // Notify parent component if callback exists
-      if (onNodeConfigChange) {
-        console.log(`Legend: Notifying parent about size change for ${type}`, {
-          colors: nodeColors,
-          sizes: newNodeSizes,
-          shapes: nodeShapes,
-          isSizeChange: true // Add flag to indicate this is a size change
-        });
-        
-        // Add a delay to ensure the state update has time to propagate
-        setTimeout(() => {
-          console.log('Sending delayed size update with sizes:', newNodeSizes);
-          onNodeConfigChange({
-            colors: nodeColors,
-            sizes: newNodeSizes,
-            shapes: nodeShapes,
-            isSizeChange: true // Add flag to indicate this is a size change
-          });
-        }, 100);
-      }
-    }
-  };
 
-  // Handle shape change
-  const handleShapeChange = (type, shape) => {
-    console.log(`Legend: Changing shape for ${type} to ${shape}`);
-    
-    if (isNodeType) {
-      // Store the string shape name
-      const newNodeShapes = { ...nodeShapes, [type]: shape };
-      setNodeShapes(newNodeShapes);
-      
-      // Save to localStorage
-      try {
-        localStorage.setItem('nodeShapes', JSON.stringify(newNodeShapes));
-        console.log(`Legend: Saved node shapes to localStorage:`, newNodeShapes);
-      } catch (error) {
-        console.warn('Could not save shape preferences to localStorage', error);
-      }
-      
-      // Notify parent component if callback exists
-      if (onNodeConfigChange) {
-        console.log(`Legend: Notifying parent about shape change for ${type}`);
-        onNodeConfigChange({
-          colors: nodeColors,
-          sizes: nodeSizes,
-          shapes: newNodeShapes,
-          isShapeChange: true // This flag is crucial for the parent to know it's a shape change
-        });
-        
-        // Add a second callback with a slight delay to ensure changes are applied
-        setTimeout(() => {
-          console.log(`Legend: Second callback for shape change ${type} to ${shape}`);
-          onNodeConfigChange({
-            colors: nodeColors,
-            sizes: nodeSizes,
-            shapes: newNodeShapes,
-            isShapeChange: true
-          });
-        }, 200);
-      }
-    }
-  };
+
 
   // Close the color picker modal
   const handleCloseModal = () => {
@@ -360,17 +239,15 @@ const Legend = ({ data, initialConfig = {}, onNodeConfigChange, onClose }) => {
   // Handle shape click from shape options
   const handleShapeClick = (type, shape) => {
     console.log(`Legend: Selected shape ${shape} for type ${type}`);
-    // Update local state
-    const newNodeShapes = { ...nodeShapes, [type]: shape };
-    setNodeShapes(newNodeShapes);
     
-    // Save to localStorage
-    try {
-      localStorage.setItem('nodeShapes', JSON.stringify(newNodeShapes));
-      console.log(`Legend: Saved node shapes to localStorage:`, newNodeShapes);
-    } catch (error) {
-      console.warn('Could not save shape preferences to localStorage', error);
+    if (!settingsReady) {
+      console.warn('Settings service not ready, skipping shape change');
+      return;
     }
+    
+    // Update settings
+    const newNodeShapes = { ...nodeShapes, [type]: shape };
+    setSetting('nodeShapes', newNodeShapes);
     
     // Pass to parent via onNodeConfigChange
     if (onNodeConfigChange) {
@@ -432,12 +309,36 @@ const Legend = ({ data, initialConfig = {}, onNodeConfigChange, onClose }) => {
               minWidth: `${getBadgeWidth(type, count, true, type)}px`,
               height: 'auto',
               border: 'none',
-              display: 'inline-block',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
               textAlign: 'center'
             }}
             onClick={() => handleBadgeClick(type, true)}
             title="Click to customize"
           >
+            <svg width="14" height="14" viewBox="-7 -7 14 14">
+              {nodeShapes[type] && nodeShapes[type].startsWith('svg:') ? (
+                <image 
+                  href={`/svg/${nodeShapes[type].substring(4)}`} 
+                  x="-7" y="-7" width="14" height="14" 
+                  preserveAspectRatio="xMidYMid meet"
+                />
+              ) : (
+                <path
+                  d={d3.symbol()
+                    .type(
+                      (nodeShapes[type] && d3[`symbol${nodeShapes[type][0].toUpperCase()}${nodeShapes[type].slice(1)}`]) 
+                      || d3.symbolCircle
+                    )
+                    .size(100)()
+                  }
+                  fill="white"
+                  stroke="white"
+                  strokeWidth="0.5"
+                />
+              )}
+            </svg>
             {type} ({count})
           </span>
         ))}
@@ -462,12 +363,14 @@ const Legend = ({ data, initialConfig = {}, onNodeConfigChange, onClose }) => {
             className="legend-badge relationship-badge"
             style={{ 
               backgroundColor: relationshipColors[type] || relationshipColors.Default,
+              borderColor: relationshipColors[type] || relationshipColors.Default,
               color: 'white',
               padding: '4px 12px',
               borderRadius: '4px',
               minWidth: `${getBadgeWidth(type, count, false)}px`,
               height: 'auto',
-              border: 'none',
+              borderWidth: '2px',
+              borderStyle: (relationshipLineStyles[type] === 'dashed' || relationshipLineStyles[type] === 'dotted') ? relationshipLineStyles[type] : 'solid',
               display: 'inline-block',
               textAlign: 'center'
             }}
@@ -490,10 +393,8 @@ const Legend = ({ data, initialConfig = {}, onNodeConfigChange, onClose }) => {
             : (relationshipColors[selectedItem] || relationshipColors.Default)
           }
           initialSize={isNodeType ? (nodeSizes[selectedItem] || 20) : null}
-          initialShape={isNodeType ? (nodeShapes[selectedItem] || d3.symbolCircle) : null}
-          onColorChange={handleColorChange}
-          onSizeChange={handleSizeChange}
-          onShapeChange={handleShapeChange}
+          initialShape={isNodeType ? (nodeShapes[selectedItem] || 'circle') : null} // Pass shape name string
+          onApply={handleModalApply} // Use the new consolidated callback
           onClose={handleCloseModal}
         />
       )}
@@ -501,4 +402,4 @@ const Legend = ({ data, initialConfig = {}, onNodeConfigChange, onClose }) => {
   );
 };
 
-export default React.memo(Legend); 
+export default React.memo(Legend);

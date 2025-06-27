@@ -1,0 +1,132 @@
+/* DocumentIcon Component Styles */
+
+.document-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 24px;
+  height: 24px;
+  margin: 0 2px;
+  padding: 4px;
+  background-color: var(--360t-light-gray, #f8f9fa);
+  border: 1px solid var(--360t-mid-gray, #dee2e6);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--360t-dark-gray, #6c757d);
+  vertical-align: middle;
+}
+
+.document-icon:hover {
+  background-color: var(--360t-primary, #00973a);
+  border-color: var(--360t-primary-dark, #00732c);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 151, 58, 0.3);
+}
+
+.document-icon svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.document-number {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background-color: var(--360t-primary, #00973a);
+  color: white;
+  border-radius: 50%;
+  font-size: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border: 1px solid white;
+  pointer-events: none;
+}
+
+.document-icon:hover .document-number {
+  background-color: var(--360t-primary-dark, #00732c);
+}
+
+/* Document Tooltip Styles */
+.document-tooltip {
+  position: fixed;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 400px;
+  min-width: 250px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.9) translateY(-5px);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.document-tooltip.visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.document-tooltip-header {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.document-tooltip-content {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .document-tooltip {
+    max-width: 280px;
+    min-width: 240px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .document-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .document-icon svg {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .document-number {
+    width: 10px;
+    height: 10px;
+    font-size: 7px;
+  }
+  
+  .document-tooltip {
+    max-width: 240px;
+    min-width: 200px;
+  }
+} 

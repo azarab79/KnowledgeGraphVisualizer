@@ -1,12 +1,14 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import * as d3 from 'd3';
 import './App.css';
 import Header from './components/Header';
 import SearchBar from './components/SearchBar';
 import GraphView from './components/GraphView';
 import NodeDetails from './components/NodeDetails';
 import Legend from './components/Legend';
+import ChatView from './components/ChatView';
+import { useDocumentation } from './components/useDocumentation.js';
+import { useSearch } from './components/useSearch.js';
 import { 
   getRelationships, 
   getInitialGraph, 
@@ -16,14 +18,13 @@ import {
   runCentralityAnalysis,
   searchNodes
 } from './services/api';
-import * as d3 from 'd3';
-
-// Storage key for node config
-const NODE_CONFIG_STORAGE_KEY = 'knowledge-graph-node-config';
+import settingsService from './services/settingsService';
+import { useSettings } from './hooks/useSettings';
+import AdvancedAnalysisPanel from './components/AdvancedAnalysisPanel';
+import { ChatProvider } from './contexts/ChatContext';
 
 function App() {
   const [graphData, setGraphData] = useState(null);
-  const [searchResults, setSearchResults] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [analysisResults, setAnalysisResults] = useState(null);
@@ -34,12 +35,27 @@ function App() {
   const [targetNode, setTargetNode] = useState(null);
   const [centralityType, setCentralityType] = useState('degree');
   const [expandedDoc, setExpandedDoc] = useState(null);
-  const [docContent, setDocContent] = useState('');
-  const [docLoading, setDocLoading] = useState(false);
-  const [docError, setDocError] = useState(null);
+  const { docContent, docLoading, docError } = useDocumentation(expandedDoc);
   const [graphContainerRef, setGraphContainerRef] = useState(null);
   const [svgRef, setSvgRef] = useState(null);
-  const [nodeConfig, setNodeConfig] = useState({ colors: {}, sizes: {}, shapes: {} });
+  
+  // Use settings service instead of local state
+  const { settings, isReady: settingsReady } = useSettings();
+  
+  // Convert settings to the format expected by components
+  const nodeConfig = useMemo(() => {
+    if (!settingsReady || !settings) {
+      return { colors: {}, sizes: {}, shapes: {}, relationshipColors: {}, relationshipLineStyles: {} };
+    }
+    
+    return {
+      colors: settings.nodeColors || {},
+      sizes: settings.nodeSizes || {},
+      shapes: settings.nodeShapes || {},
+      relationshipColors: settings.relationshipColors || {},
+      relationshipLineStyles: settings.relationshipLineStyles || {}
+    };
+  }, [settings, settingsReady]);
 
   const docMapping = {
     'getting-started': 'getting-started',
@@ -56,33 +72,169 @@ function App() {
     'validation-guide': 'validation-guide'
   };
 
-  // Load node configuration from localStorage on startup
-  useEffect(() => {
-    try {
-      const savedConfig = localStorage.getItem(NODE_CONFIG_STORAGE_KEY);
-      if (savedConfig) {
-        const parsedConfig = JSON.parse(savedConfig);
-        
-        // No need to convert shapes - we now use string representation throughout
-        setNodeConfig(parsedConfig);
-        console.log('Loaded saved node configuration:', parsedConfig);
+  // History management functions
+  const updateURL = useCallback((state) => {
+    const url = new URL(window.location);
+    
+    // Update search params based on state
+    if (state.view) {
+      url.searchParams.set('view', state.view);
+    }
+    if (state.nodeId) {
+      url.searchParams.set('nodeId', state.nodeId);
+    } else {
+      url.searchParams.delete('nodeId');
+    }
+    if (state.showDetails !== undefined) {
+      if (state.showDetails) {
+        url.searchParams.set('details', 'true');
+      } else {
+        url.searchParams.delete('details');
       }
-    } catch (err) {
-      console.warn('Failed to load saved node configuration:', err);
+    }
+    if (state.expandedDoc) {
+      url.searchParams.set('doc', state.expandedDoc);
+    } else {
+      url.searchParams.delete('doc');
+    }
+
+    // Push new state to history
+    window.history.pushState(state, '', url.toString());
+  }, []);
+
+  const restoreFromURL = useCallback(async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const view = urlParams.get('view') || 'explorer';
+    const rawNodeId = urlParams.get('nodeId');
+    // Properly decode nodeId to handle names with spaces and special characters
+    const nodeId = rawNodeId ? decodeURIComponent(rawNodeId) : null;
+    const showDetails = urlParams.get('details') === 'true';
+    const expandedDoc = urlParams.get('doc');
+
+    // Restore view state
+    setCurrentView(view);
+    
+    if (expandedDoc) {
+      setExpandedDoc(expandedDoc);
+    }
+
+    // Restore node selection if present
+    if (nodeId && showDetails) {
+      setLoading(true);
+      try {
+        // We need to find the node data first
+        // This could be from search results or we might need to make an API call
+        const relationships = await getRelationships(nodeId);
+        if (relationships && relationships.nodes) {
+          const node = relationships.nodes.find(n => n.id == nodeId);
+          if (node) {
+            setSelectedNode(node);
+            setShowDetails(true);
+            
+            // Convert edges to links for D3
+            if (relationships.edges) {
+              const graphData = {
+                nodes: relationships.nodes,
+                links: relationships.edges.map(edge => ({
+                  ...edge,
+                  source: edge.from,
+                  target: edge.to,
+                  type: edge.label
+                }))
+              };
+              setGraphData(graphData);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error restoring node from URL:', err);
+        // Clear invalid URL params
+        const url = new URL(window.location);
+        url.searchParams.delete('nodeId');
+        url.searchParams.delete('details');
+        window.history.replaceState({}, '', url.toString());
+      } finally {
+        setLoading(false);
+      }
+    } else if (view === 'explorer') {
+      // Load initial graph when in explorer view without specific node
+      setLoading(true);
+      try {
+        const initialGraphData = await getInitialGraph();
+        setGraphData(initialGraphData);
+      } catch (err) {
+        console.error('Error loading initial graph:', err);
+        setError('Failed to load initial graph. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     }
   }, []);
 
-  // Listen for loadInitialGraph event
+  // Handle browser back/forward buttons
   useEffect(() => {
+    const handlePopState = (event) => {
+      // Restore state from URL parameters
+      restoreFromURL();
+    };
+
+    // Listen for popstate events (back/forward button)
+    window.addEventListener('popstate', handlePopState);
+    
+    // Initial load - check URL parameters
+    restoreFromURL();
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [restoreFromURL]);
+
+  // Set initial URL on first load
+  useEffect(() => {
+    if (window.location.search === '') {
+      updateURL({ view: 'explorer' });
+    }
+  }, [updateURL]);
+
+  // Initialize settings service on startup
+  useEffect(() => {
+    const initializeSettings = async () => {
+      try {
+        await settingsService.initialize();
+      } catch (err) {
+        console.error('Error initializing settings:', err);
+      }
+    };
+    
+    initializeSettings();
+  }, []);
+
+  // Event handlers for custom events
+  useEffect(() => {
+    // Cleanup function to remove all tooltips when switching views
+    const cleanupTooltips = () => {
+      // Remove all D3 tooltips
+      d3.select("body").selectAll(".document-tooltip").remove();
+      // Remove React tooltips
+      document.querySelectorAll('.custom-tooltip, .node-chip-tooltip').forEach(el => el.remove());
+    };
+
     const handleLoadInitialGraph = async () => {
+      cleanupTooltips(); // Clean up before switching
+      
+      // If we're already in explorer view with graph data, don't reload
+      // unless we're currently showing search results or node details
+      if (currentView === 'explorer' && graphData && !showDetails && (!hookResults || hookResults.length === 0)) {
+        return;
+      }
+      
+      // Clear search results when loading initial graph
+      if (clearSearch) {
+        clearSearch();
+      }
+      
       setLoading(true);
       setError(null);
-      setSearchResults([]);
-      setSelectedNode(null);
-      setShowDetails(false);
-      setAnalysisResults(null);
-      setCurrentView('explorer');
-      
       try {
         const initialGraphData = await getInitialGraph();
         setGraphData(initialGraphData);
@@ -95,15 +247,27 @@ function App() {
     };
 
     const handleShowAnalysis = () => {
+      cleanupTooltips(); // Clean up before switching
       setCurrentView('analysis');
       setShowDetails(false);
-      setSearchResults([]);
+      clearSearch();
+      updateURL({ view: 'analysis' });
     };
 
     const handleShowDocumentation = () => {
+      cleanupTooltips(); // Clean up before switching
       setCurrentView('documentation');
       setShowDetails(false);
-      setSearchResults([]);
+      clearSearch();
+      updateURL({ view: 'documentation' });
+    };
+
+    const handleShowChat = () => {
+      cleanupTooltips(); // Clean up before switching
+      setCurrentView('chat');
+      setShowDetails(false);
+      clearSearch();
+      updateURL({ view: 'chat' });
     };
 
     // Add error handler for WebSocket connection issues
@@ -116,6 +280,7 @@ function App() {
     window.addEventListener('loadInitialGraph', handleLoadInitialGraph);
     window.addEventListener('showAnalysis', handleShowAnalysis);
     window.addEventListener('showDocumentation', handleShowDocumentation);
+    window.addEventListener('showChat', handleShowChat);
     window.addEventListener('error', (e) => {
       if (e.message && (
           e.message.includes('WebSocket') || 
@@ -126,168 +291,62 @@ function App() {
       }
     });
     
-    // Load initial graph when component mounts
-    handleLoadInitialGraph();
-    
     return () => {
       window.removeEventListener('loadInitialGraph', handleLoadInitialGraph);
       window.removeEventListener('showAnalysis', handleShowAnalysis);
       window.removeEventListener('showDocumentation', handleShowDocumentation);
+      window.removeEventListener('showChat', handleShowChat);
+      window.removeEventListener('error', (e) => {
+        if (e.message && (
+            e.message.includes('WebSocket') || 
+            e.message.includes('ws://') || 
+            e.message.includes('ERR_CONNECTION_REFUSED')
+          )) {
+          handleWebSocketError(e);
+        }
+      });
+      
+      // Final cleanup when component unmounts
+      cleanupTooltips();
     };
-  }, []);
-
-  useEffect(() => {
-    // Configure marked options
-    marked.setOptions({
-      gfm: true,
-      breaks: true,
-      sanitize: false,
-      headerIds: true,
-      mangle: false
-    });
-
-    const loadDocContent = async () => {
-      if (!expandedDoc) {
-        setDocContent('');
-        setDocError(null);
-        return;
-      }
-
-      setDocLoading(true);
-      setDocError(null);
-
-      try {
-        const mappedDoc = docMapping[expandedDoc] || expandedDoc;
-        console.log(`Loading documentation: ${mappedDoc}`);
-        
-        const response = await fetch(`/api/docs/${mappedDoc}.md`);
-        console.log('Response:', {
-          status: response.status,
-          statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries())
-        });
-        
-        if (!response.ok) {
-          let errorMessage;
-          try {
-            const errorData = await response.json();
-            console.log('Error response data:', errorData);
-            
-            // Extract error message from various possible formats
-            errorMessage = typeof errorData === 'string' ? errorData :
-              errorData.error?.message || errorData.error || 
-              errorData.message || JSON.stringify(errorData);
-            
-          } catch (parseError) {
-            console.log('Error parsing response:', parseError);
-            errorMessage = `Failed to load documentation: ${response.status} ${response.statusText}`;
-          }
-          throw new Error(errorMessage);
-        }
-
-        const contentType = response.headers.get('content-type');
-        console.log('Content-Type:', contentType);
-
-        if (!contentType) {
-          throw new Error('No content type received from server');
-        }
-
-        // Accept both text/markdown and text/plain
-        if (!contentType.includes('text/markdown') && !contentType.includes('text/plain')) {
-          throw new Error(`Invalid content type: ${contentType}`);
-        }
-
-        const content = await response.text();
-        console.log('Received content length:', content.length);
-        
-        if (!content.trim()) {
-          throw new Error('Received empty content from server');
-        }
-
-        // Process the markdown content
-        const renderedContent = marked.parse(content);
-        const sanitizedContent = DOMPurify.sanitize(renderedContent, {
-          ADD_TAGS: ['table', 'thead', 'tbody', 'tr', 'th', 'td'],
-          ADD_ATTR: ['align']
-        });
-        
-        if (!sanitizedContent.trim()) {
-          throw new Error('Content processing resulted in empty output');
-        }
-
-        setDocContent(sanitizedContent);
-      } catch (error) {
-        console.error('Error loading documentation:', error);
-        // Ensure we're converting the error to a string properly
-        setDocError(error instanceof Error ? error.message : String(error));
-      } finally {
-        setDocLoading(false);
-      }
-    };
-
-    loadDocContent();
-  }, [expandedDoc]);
+  }, [updateURL]);
 
   // Create a memoized version of the graph data to prevent unnecessary re-renders
   const memoizedGraphData = useMemo(() => graphData, [graphData]);
   
-  // Handle search results - memoized to avoid re-creating on every render
-  const handleSearchResults = useCallback((results) => {
-    if (results && results.nodes) {
-      setSearchResults(results.nodes);
-      
-      // If there's only one search result, select it automatically 
-      // and show its details and relationships
-      if (results.nodes.length === 1) {
-        const node = results.nodes[0];
-        setSelectedNode(node);
-        setShowDetails(true);
-        setLoading(true);
-        
-        // Fetch relationships for the single result
-        getRelationships(node.id)
-          .then(relationships => {
-            if (relationships && relationships.nodes) {
-              // Convert edges to links for D3
-              const graphData = {
-                nodes: relationships.nodes,
-                links: relationships.edges ? relationships.edges.map(edge => ({
-                  ...edge,
-                  source: edge.from,
-                  target: edge.to,
-                  type: edge.label
-                })) : []
-              };
-              setGraphData(graphData);
-            }
-          })
-          .catch(err => {
-            console.error('Error fetching relationships for search result:', err);
-            setError('Failed to load relationships. Please try again.');
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      } else {
-        // For multiple results, reset the current selection
-        setSelectedNode(null);
-        setShowDetails(false);
-        setGraphData(null);
-        setAnalysisResults(null);
-      }
-    }
-  }, []);
+  const { 
+    searchResults: hookResults, 
+    handleSearchResults, 
+    clearSearch = () => {} // Provide safe default
+  } = useSearch(
+    setGraphData,
+    setSelectedNode,
+    setShowDetails,
+    setLoading,
+    setError,
+    setAnalysisResults
+  ) || { searchResults: [], handleSearchResults: () => {}, clearSearch: () => {} };
+
+  // Use hookResults directly instead of syncing to avoid infinite loops
+  // The search results from the hook are already managed properly
 
   // Handle node selection - memoized to avoid re-creating on every render
   const handleNodeSelect = useCallback(async (node) => {
     if (!node) return;
     
     // Clear search results when selecting a node from search results
-    setSearchResults([]);
-    setSelectedNode(node);
+    clearSearch();
+    let nodeToSelect = node;
+
+    setSelectedNode(nodeToSelect);
     setShowDetails(true);
-    setLoading(true);
-    setError(null);
+    
+    // Update URL to reflect selected node
+    updateURL({ 
+      view: currentView, 
+      nodeId: node.id, 
+      showDetails: true 
+    });
     
     try {
       const relationships = await getRelationships(node.id);
@@ -310,7 +369,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [updateURL, currentView]);
 
   // Handle impact analysis results - memoized
   const handleAnalysisResults = useCallback((results) => {
@@ -320,12 +379,7 @@ function App() {
       // Convert data format for D3
       const graphData = {
         nodes: results.nodes,
-        links: results.edges.map(edge => ({
-          ...edge,
-          source: edge.from,
-          target: edge.to,
-          type: edge.label
-        }))
+        links: results.links || []
       };
       setGraphData(graphData);
     }
@@ -334,12 +388,13 @@ function App() {
   // Close the details panel - memoized
   const handleCloseDetails = useCallback(() => {
     setShowDetails(false);
+    setSelectedNode(null);
+    
+    // Update URL to remove node selection
+    updateURL({ view: currentView, showDetails: false });
     
     // Check if we're in Explorer view (not Analysis)
     if (currentView === 'explorer') {
-      // Explicitly reset selected node
-      setSelectedNode(null);
-      
       // Set loading state
       setLoading(true);
       
@@ -356,7 +411,7 @@ function App() {
           setLoading(false);
         });
     }
-  }, [currentView]);
+  }, [currentView, updateURL]);
 
   // Determine main content class based on panel visibility
   const mainContentClass = `main-content ${showDetails ? 'with-details' : ''}`;
@@ -425,466 +480,40 @@ function App() {
       }
     } catch (err) {
       console.error('Error running analysis:', err);
-      setError(`Failed to run ${type} analysis. Please try again.`);
+      setError('Analysis failed. Please try again.');
     } finally {
       setLoading(false);
     }
   }, [selectedNode, targetNode]);
 
-  // Handle node configuration changes - memoized
-  const handleNodeConfigChange = useCallback((config) => {
-    console.log('App: Received node config change:', config);
+  // Handle centrality analysis
+  const handleCentralityAnalysis = useCallback(async (type) => {
+    setLoading(true);
+    setError(null);
+    setAnalysisType('centrality');
+    setCentralityType(type);
     
-    setNodeConfig(prevConfig => {
-      const newConfig = { ...prevConfig };
-      
-      // Properly merge colors without disturbing sizes and shapes
-      if (config.colors) {
-        console.log('App: Updating node colors');
-        newConfig.colors = {
-          ...prevConfig.colors,
-          ...config.colors
-        };
+    try {
+      const result = await runCentralityAnalysis(type);
+      if (result) {
+        setGraphData(result);
       }
-      
-      // Properly merge sizes without disturbing colors and shapes
-      if (config.sizes) {
-        console.log('App: Updating node sizes');
-        newConfig.sizes = {
-          ...prevConfig.sizes,
-          ...config.sizes
-        };
-      }
-      
-      // Properly merge shapes without disturbing colors and sizes
-      if (config.shapes) {
-        console.log('App: Updating node shapes:', config.shapes);
-        newConfig.shapes = {
-          ...(prevConfig.shapes || {}),
-          ...config.shapes
-        };
-        
-        // Ensure all shape values are strings - no conversion needed as we now only use strings
-      }
-      
-      // Handle relationship colors
-      if (config.relationshipColors) {
-        console.log('App: Updating relationship colors');
-        newConfig.relationshipColors = {
-          ...(prevConfig.relationshipColors || {}),
-          ...config.relationshipColors
-        };
-      }
-      
-      // Save the updated configuration to localStorage
-      try {
-        localStorage.setItem(NODE_CONFIG_STORAGE_KEY, JSON.stringify(newConfig));
-        console.log('App: Saved node configuration to localStorage:', newConfig);
-      } catch (err) {
-        console.warn('Failed to save node configuration:', err);
-      }
-      
-      return newConfig;
-    });
+    } catch (err) {
+      console.error('Error running centrality analysis:', err);
+      setError('Centrality analysis failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const renderAnalysisContent = () => {
-    return (
-      <div className="content-wrapper">
-        <h2>Knowledge Graph Analysis</h2>
-        
-        <div className="analysis-content">
-          <div className="analysis-section">
-            <h3>Analysis Tools</h3>
-            <div className="analysis-tools">
-              <button 
-                className={`tool-button ${analysisType === 'impact' ? 'active' : ''}`}
-                onClick={() => setAnalysisType('impact')}
-                disabled={!selectedNode}
-              >
-                <strong>Impact Analysis</strong>
-                <span className="tool-description">Analyze how changes to a node impact other nodes</span>
-              </button>
-              
-              <button 
-                className={`tool-button ${analysisType === 'dependencies' ? 'active' : ''}`}
-                onClick={() => setAnalysisType('dependencies')}
-                disabled={!selectedNode}
-              >
-                <strong>Dependency Analysis</strong>
-                <span className="tool-description">Identify dependencies of the selected node</span>
-              </button>
-              
-              <div className="tool-group">
-                <button 
-                  className={`tool-button ${analysisType === 'paths' ? 'active' : ''}`}
-                  onClick={() => setAnalysisType('paths')}
-                  disabled={!selectedNode}
-                >
-                  <strong>Path Finding</strong>
-                  <span className="tool-description">Find paths between two nodes</span>
-                </button>
-                
-                {analysisType === 'paths' && (
-                  <div className="target-node-selector">
-                    <label htmlFor="target-node">Target Node:</label>
-                    <select 
-                      id="target-node"
-                      value={targetNode?.id || ''}
-                      onChange={(e) => {
-                        const selectedNodeId = e.target.value;
-                        const node = searchResults.find(n => n.id === selectedNodeId) || 
-                          (analysisResults?.nodes?.find(n => n.id === selectedNodeId) || null);
-                        setTargetNode(node);
-                      }}
-                    >
-                      <option value="">Select a target node</option>
-                      {searchResults.map(node => (
-                        <option key={node.id} value={node.id}>
-                          {node.label || node.name || node.id}
-                        </option>
-                      ))}
-                      {analysisResults && analysisResults.nodes && 
-                        analysisResults.nodes
-                          .filter(node => node.id !== selectedNode?.id)
-                          .map(node => (
-                            <option key={node.id} value={node.id}>
-                              {node.label || node.name || node.id}
-                            </option>
-                          ))
-                      }
-                    </select>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {error && (
-              <div className="error-message">
-                {error}
-              </div>
-            )}
-            
-            {!selectedNode && (
-              <p className="helper-text">Select a node in the Explorer view to perform analysis</p>
-            )}
-          </div>
-          
-          {graphData && (
-            <div className="analysis-section">
-              <h3>Analysis Results</h3>
-              <div className="graph-wrapper">
-                <GraphView 
-                  data={memoizedGraphData} 
-                  onNodeSelect={handleNodeSelect}
-                  customConfig={nodeConfig}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderDocumentationContent = () => {
-    return (
-      <div className="documentation-container" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h1>360T Knowledge Graph Documentation</h1>
-        
-        <div className="doc-navigation">
-          <h2>Documentation Index</h2>
-          <div className="doc-grid">
-            {Object.entries({
-              'getting-started': { icon: '🚀', title: 'Getting Started', desc: 'Quick introduction and setup guide' },
-              'user-guide': { icon: '📖', title: 'User Guide', desc: 'Complete guide for using the Knowledge Graph' },
-              'data-model': { icon: '🗄️', title: 'Data Model', desc: 'Understanding the graph structure' },
-              'api-reference': { icon: '🔌', title: 'API Reference', desc: 'API endpoints and usage' },
-              'analytics-guide': { icon: '📊', title: 'Analytics Guide', desc: 'Using analysis tools and features' },
-              'query-guide': { icon: '🔍', title: 'Query Guide', desc: 'Writing and executing queries' },
-              'visualization': { icon: '📈', title: 'Visualization', desc: 'Graph visualization features' },
-              'development': { icon: '👨‍💻', title: 'Development', desc: 'Developer documentation' },
-              'administration': { icon: '⚙️', title: 'Administration', desc: 'System administration guide' },
-              'troubleshooting': { icon: '🔧', title: 'Troubleshooting', desc: 'Common issues and solutions' },
-              'monitoring-guide': { icon: '📡', title: 'Monitoring', desc: 'System monitoring guide' },
-              'validation-guide': { icon: '✅', title: 'Validation', desc: 'Data validation guidelines' }
-            }).map(([key, { icon, title, desc }]) => (
-              <div key={key} className="doc-card" onClick={() => setExpandedDoc(key)}>
-                <h3>{icon} {title}</h3>
-                <p>{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {expandedDoc && (
-          <div className="expanded-doc">
-            <div className="expanded-doc-header">
-              <h2>{expandedDoc.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h2>
-              <button className="close-doc" onClick={() => setExpandedDoc(null)}>×</button>
-            </div>
-            <div className="doc-content markdown-body">
-              {docLoading ? (
-                <div className="loading-overlay">
-                  <div className="loading-spinner"></div>
-                  <p>Loading documentation...</p>
-                </div>
-              ) : docError ? (
-                <div className="error-message">
-                  {docError}
-                </div>
-              ) : (
-                <div dangerouslySetInnerHTML={{ __html: docContent }} />
-              )}
-            </div>
-          </div>
-        )}
-
-        <style>{`
-          .documentation-container {
-            line-height: 1.6;
-            color: #333;
-          }
-          .doc-navigation {
-            margin-bottom: 40px;
-          }
-          .doc-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-          }
-          .doc-card {
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-          }
-          .doc-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-          }
-          .doc-card h3 {
-            margin: 0 0 10px 0;
-            color: #2c5282;
-          }
-          .doc-card p {
-            margin: 0;
-            color: #4a5568;
-            font-size: 0.9em;
-          }
-          .expanded-doc {
-            margin-top: 40px;
-            background: #f8fafc;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-          }
-          .expanded-doc-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            background: #fff;
-            border-bottom: 1px solid #e2e8f0;
-            border-radius: 8px 8px 0 0;
-          }
-          .expanded-doc-header h2 {
-            margin: 0;
-          }
-          .close-doc {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #4a5568;
-            padding: 0 10px;
-          }
-          .close-doc:hover {
-            color: #2d3748;
-          }
-          .doc-content {
-            padding: 20px;
-            max-height: 600px;
-            overflow-y: auto;
-          }
-          .markdown-body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-            font-size: 16px;
-            line-height: 1.6;
-          }
-          .markdown-body h1 {
-            padding-bottom: 0.3em;
-            font-size: 2em;
-            border-bottom: 1px solid #eaecef;
-          }
-          .markdown-body h2 {
-            padding-bottom: 0.3em;
-            font-size: 1.5em;
-            border-bottom: 1px solid #eaecef;
-          }
-          .markdown-body h3 {
-            font-size: 1.25em;
-          }
-          .markdown-body code {
-            padding: 0.2em 0.4em;
-            margin: 0;
-            font-size: 85%;
-            background-color: rgba(27,31,35,0.05);
-            border-radius: 3px;
-            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-          }
-          .markdown-body pre {
-            padding: 16px;
-            overflow: auto;
-            font-size: 85%;
-            line-height: 1.45;
-            background-color: #f6f8fa;
-            border-radius: 3px;
-          }
-          .markdown-body pre code {
-            display: inline;
-            max-width: auto;
-            padding: 0;
-            margin: 0;
-            overflow: visible;
-            line-height: inherit;
-            word-wrap: normal;
-            background-color: transparent;
-            border: 0;
-          }
-          .markdown-body blockquote {
-            padding: 0 1em;
-            color: #6a737d;
-            border-left: 0.25em solid #dfe2e5;
-            margin: 0;
-          }
-          .markdown-body ul,
-          .markdown-body ol {
-            padding-left: 2em;
-          }
-          .markdown-body table {
-            display: block;
-            width: 100%;
-            overflow: auto;
-            border-spacing: 0;
-            border-collapse: collapse;
-          }
-          .markdown-body table th,
-          .markdown-body table td {
-            padding: 6px 13px;
-            border: 1px solid #dfe2e5;
-          }
-          .markdown-body table tr {
-            background-color: #fff;
-            border-top: 1px solid #c6cbd1;
-          }
-          .markdown-body table tr:nth-child(2n) {
-            background-color: #f6f8fa;
-          }
-          .loading-overlay {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-          }
-          .error-message {
-            color: #e53e3e;
-            padding: 1rem;
-            background-color: #fff5f5;
-            border: 1px solid #feb2b2;
-            border-radius: 4px;
-            margin: 1rem 0;
-          }
-        `}</style>
-      </div>
-    );
-  };
-
-  const renderExplorerContent = () => {
-    return (
-      <div className="explorer-content">
-        <div className="search-wrapper">
-          <SearchBar 
-            onSearchResults={handleSearchResults} 
-            onNodeSelect={handleNodeSelect}
-          />
-        </div>
-        
-        <div className="graph-layout">
-          <div className="graph-container">
-            {loading && <div className="loading-overlay">
-              <div className="loading-spinner"></div>
-              <p>Loading graph data...</p>
-            </div>}
-            
-            {error && <div className="error-message">
-              {error}
-              <button className="retry-button" onClick={() => window.dispatchEvent(new Event('loadInitialGraph'))}>
-                Retry
-              </button>
-            </div>}
-            
-            {!loading && !error && (
-              <>
-                {searchResults.length > 0 ? (
-                  <div className="search-results">
-                    <h3>Search Results ({searchResults.length})</h3>
-                    <ul className="result-list">
-                      {searchResults.map(result => (
-                        <li 
-                          key={result.id} 
-                          className="result-item"
-                          onClick={() => handleNodeSelect(result)}
-                        >
-                          <span className="result-name">
-                            {result.properties?.name || 
-                             result.properties?.test_case_id || 
-                             result.label || 
-                             result.id}
-                          </span>
-                          <span className="result-type">
-                            {result.labels && result.labels.length > 0 
-                              ? result.labels[0] 
-                              : result.group || 'Node'}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : (
-                  graphData ? (
-                    <GraphView 
-                      data={memoizedGraphData} 
-                      onNodeSelect={handleNodeSelect}
-                      customConfig={nodeConfig}
-                    />
-                  ) : (
-                    <div className="graph-placeholder">
-                      <p>Search for a node or select a relationship type to visualize</p>
-                    </div>
-                  )
-                )}
-              </>
-            )}
-          </div>
-          
-          {graphData && !loading && !error && !searchResults.length > 0 && (
-            <div className="legend-wrapper">
-              <Legend 
-                data={memoizedGraphData}
-                initialConfig={nodeConfig}
-                onNodeConfigChange={handleNodeConfigChange} 
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
+  // Update node configuration
+  const handleNodeConfigChange = useCallback(async (newConfig) => {
+    try {
+      await settingsService.updateSettings(newConfig);
+    } catch (error) {
+      console.error('Error updating node configuration:', error);
+    }
+  }, []);
 
   const renderContent = () => {
     switch (currentView) {
@@ -892,21 +521,357 @@ function App() {
         return (
           <div className="content-wrapper">
             <h2>Graph Analysis</h2>
-            {renderAnalysisContent()}
+            <AdvancedAnalysisPanel />
+          </div>
+        );
+      case 'chat':
+        return (
+          <div className="content-wrapper chat-content-wrapper">
+            <ChatView onNodeSelect={handleNodeSelect} />
           </div>
         );
       case 'documentation':
         return (
           <div className="content-wrapper">
             <h2>Documentation</h2>
-            {renderDocumentationContent()}
+            <div className="documentation-container" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+              <h1>360T Knowledge Graph Documentation</h1>
+              
+              <div className="doc-navigation">
+                <h2>Documentation Index</h2>
+                <div className="doc-grid">
+                  {Object.entries({
+                    'getting-started': { icon: '🚀', title: 'Getting Started', desc: 'Quick introduction and setup guide' },
+                    'user-guide': { icon: '📖', title: 'User Guide', desc: 'Complete guide for using the Knowledge Graph' },
+                    'data-model': { icon: '🗄️', title: 'Data Model', desc: 'Understanding the graph structure' },
+                    'api-reference': { icon: '🔌', title: 'API Reference', desc: 'API endpoints and usage' },
+                    'analytics-guide': { icon: '📊', title: 'Analytics Guide', desc: 'Using analysis tools and features' },
+                    'query-guide': { icon: '🔍', title: 'Query Guide', desc: 'Writing and executing queries' },
+                    'visualization': { icon: '📈', title: 'Visualization', desc: 'Graph visualization features' },
+                    'development': { icon: '👨‍💻', title: 'Development', desc: 'Developer documentation' },
+                    'administration': { icon: '⚙️', title: 'Administration', desc: 'System administration guide' },
+                    'troubleshooting': { icon: '🔧', title: 'Troubleshooting', desc: 'Common issues and solutions' },
+                    'monitoring-guide': { icon: '📡', title: 'Monitoring', desc: 'System monitoring guide' },
+                    'validation-guide': { icon: '✅', title: 'Validation', desc: 'Data validation guidelines' }
+                  }).map(([key, { icon, title, desc }]) => (
+                    <div key={key} className="doc-card" onClick={() => {
+                      setExpandedDoc(key);
+                      updateURL({ view: currentView, expandedDoc: key });
+                    }}>
+                      <h3>{icon} {title}</h3>
+                      <p>{desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {expandedDoc && (
+                <div className="expanded-doc">
+                  <div className="expanded-doc-header">
+                    <h2>{expandedDoc.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h2>
+                    <button className="close-doc" onClick={() => {
+                      setExpandedDoc(null);
+                      updateURL({ view: currentView });
+                    }}>×</button>
+                  </div>
+                  <div className="doc-content markdown-body">
+                    {docLoading ? (
+                      <div className="loading-overlay">
+                        <div className="loading-spinner"></div>
+                        <p>Loading documentation...</p>
+                      </div>
+                    ) : docError ? (
+                      <div className="error-message">
+                        {docError}
+                      </div>
+                    ) : (
+                      <div dangerouslySetInnerHTML={{ __html: docContent }} />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <style>{`
+                .documentation-container {
+                  line-height: 1.6;
+                  color: #333;
+                }
+                .doc-navigation {
+                  margin-bottom: 40px;
+                }
+                .doc-grid {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                  gap: 20px;
+                  margin-top: 20px;
+                }
+                .doc-card {
+                  background: #fff;
+                  border: 1px solid #e2e8f0;
+                  border-radius: 8px;
+                  padding: 20px;
+                  cursor: pointer;
+                  transition: all 0.2s ease;
+                  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                .doc-card:hover {
+                  border-color: #4299e1;
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                  transform: translateY(-2px);
+                }
+                .doc-card h3 {
+                  margin: 0 0 10px 0;
+                  color: #2d3748;
+                  font-size: 18px;
+                }
+                .doc-card p {
+                  margin: 0;
+                  color: #4a5568;
+                  font-size: 14px;
+                }
+                .expanded-doc {
+                  margin-top: 40px;
+                  border: 1px solid #e2e8f0;
+                  border-radius: 8px;
+                  background: #fff;
+                }
+                .expanded-doc-header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  padding: 20px;
+                  border-bottom: 1px solid #e2e8f0;
+                  background: #f7fafc;
+                  border-radius: 8px 8px 0 0;
+                }
+                .expanded-doc-header h2 {
+                  margin: 0;
+                  color: #2d3748;
+                }
+                .close-doc {
+                  background: none;
+                  border: none;
+                  font-size: 24px;
+                  color: #718096;
+                  cursor: pointer;
+                  padding: 0;
+                  width: 30px;
+                  height: 30px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  border-radius: 4px;
+                  transition: all 0.2s ease;
+                }
+                .close-doc:hover {
+                  background: #e2e8f0;
+                  color: #2d3748;
+                }
+                .doc-content {
+                  padding: 20px;
+                  max-height: 600px;
+                  overflow-y: auto;
+                }
+                .markdown-body {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+                  font-size: 16px;
+                  line-height: 1.5;
+                  word-wrap: break-word;
+                }
+                .markdown-body h1,
+                .markdown-body h2,
+                .markdown-body h3,
+                .markdown-body h4,
+                .markdown-body h5,
+                .markdown-body h6 {
+                  margin-top: 24px;
+                  margin-bottom: 16px;
+                  font-weight: 600;
+                  line-height: 1.25;
+                  color: #24292e;
+                }
+                .markdown-body h1 {
+                  font-size: 32px;
+                  border-bottom: 1px solid #eaecef;
+                  padding-bottom: 10px;
+                }
+                .markdown-body h2 {
+                  font-size: 24px;
+                  border-bottom: 1px solid #eaecef;
+                  padding-bottom: 8px;
+                }
+                .markdown-body h3 {
+                  font-size: 20px;
+                }
+                .markdown-body h4 {
+                  font-size: 16px;
+                }
+                .markdown-body p {
+                  margin-top: 0;
+                  margin-bottom: 16px;
+                }
+                .markdown-body code {
+                  padding: 2px 4px;
+                  margin: 0;
+                  font-size: 85%;
+                  background-color: rgba(27, 31, 35, 0.05);
+                  border-radius: 3px;
+                  font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+                }
+                .markdown-body pre {
+                  padding: 16px;
+                  overflow: auto;
+                  font-size: 85%;
+                  line-height: 1.45;
+                  background-color: #f6f8fa;
+                  border-radius: 6px;
+                  margin-bottom: 16px;
+                }
+                .markdown-body pre code {
+                  background: transparent;
+                  border: 0;
+                  display: inline;
+                  line-height: inherit;
+                  margin: 0;
+                  max-width: auto;
+                  overflow: visible;
+                  padding: 0;
+                  word-wrap: normal;
+                }
+                .markdown-body ul,
+                .markdown-body ol {
+                  padding-left: 30px;
+                  margin-top: 0;
+                  margin-bottom: 16px;
+                }
+                .markdown-body li {
+                  margin-bottom: 4px;
+                }
+                .markdown-body blockquote {
+                  padding: 0 16px;
+                  color: #6a737d;
+                  border-left: 4px solid #dfe2e5;
+                  margin: 0 0 16px 0;
+                }
+                .markdown-body table {
+                  display: block;
+                  width: 100%;
+                  overflow: auto;
+                  border-spacing: 0;
+                  border-collapse: collapse;
+                }
+                .markdown-body table th,
+                .markdown-body table td {
+                  padding: 6px 13px;
+                  border: 1px solid #dfe2e5;
+                }
+                .markdown-body table tr {
+                  background-color: #fff;
+                  border-top: 1px solid #c6cbd1;
+                }
+                .markdown-body table tr:nth-child(2n) {
+                  background-color: #f6f8fa;
+                }
+                .loading-overlay {
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  padding: 2rem;
+                }
+                .error-message {
+                  color: #e53e3e;
+                  padding: 1rem;
+                  background-color: #fff5f5;
+                  border: 1px solid #feb2b2;
+                  border-radius: 4px;
+                  margin: 1rem 0;
+                }
+              `}</style>
+            </div>
           </div>
         );
       default:
         return (
           <div className="content-wrapper">
             <h2>Explorer</h2>
-            {renderExplorerContent()}
+            <div className="explorer-content">
+              <div className="search-wrapper">
+                <SearchBar 
+                  onSearchResults={handleSearchResults} 
+                  onNodeSelect={handleNodeSelect}
+                />
+              </div>
+              
+              <div className="graph-layout">
+                <div className="graph-container">
+                  {loading && <div className="loading-overlay">
+                    <div className="loading-spinner"></div>
+                    <p>Loading graph data...</p>
+                  </div>}
+                  
+                  {error && <div className="error-message">
+                    {error}
+                    <button className="retry-button" onClick={() => window.dispatchEvent(new Event('loadInitialGraph'))}>
+                      Retry
+                    </button>
+                  </div>}
+                  
+                  {!loading && !error && (
+                    <>
+                      {hookResults.length > 0 ? (
+                        <div className="search-results">
+                          <h3>Search Results ({hookResults.length})</h3>
+                          <ul className="result-list">
+                            {hookResults.map(result => (
+                              <li 
+                                key={result.id} 
+                                className="result-item"
+                                onClick={() => handleNodeSelect(result)}
+                              >
+                                <span className="result-name">
+                                  {result.properties?.name || 
+                                   result.properties?.test_case_id || 
+                                   result.label || 
+                                   result.id}
+                                </span>
+                                <span className="result-type">
+                                  {result.labels && result.labels.length > 0 
+                                    ? result.labels[0] 
+                                    : result.group || 'Node'}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : (
+                        graphData ? (
+                          <GraphView 
+                            data={memoizedGraphData} 
+                            onNodeSelect={handleNodeSelect}
+                            customConfig={nodeConfig}
+                          />
+                        ) : (
+                          <div className="graph-placeholder">
+                            <p>Search for a node or select a relationship type to visualize</p>
+                          </div>
+                        )
+                      )}
+                    </>
+                  )}
+                </div>
+                
+                {graphData && !loading && !error && !hookResults.length > 0 && (
+                  <div className="legend-wrapper">
+                    <Legend 
+                      data={memoizedGraphData}
+                      initialConfig={nodeConfig}
+                      onNodeConfigChange={handleNodeConfigChange} 
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         );
     }
@@ -915,22 +880,21 @@ function App() {
   return (
     <div className="app">
       <Header 
-        onDashboardClick={() => setCurrentView('explorer')} 
-        onAnalysisClick={() => setCurrentView('analysis')}
-        onDocumentationClick={() => setCurrentView('documentation')}
+        onSwitchView={setCurrentView} 
         currentView={currentView}
+        onNodeConfigChange={handleNodeConfigChange}
+        config={nodeConfig} 
       />
-      
       <div className="app-container">
         <div className={mainContentClass}>
           {renderContent()}
         </div>
-        
-        {showDetails && (
-          <NodeDetails 
+        {showDetails && selectedNode && (
+          <NodeDetails
             selectedNode={selectedNode}
             onClose={handleCloseDetails}
             onAnalysisResults={handleAnalysisResults}
+            onNodeSelect={handleNodeSelect}
           />
         )}
       </div>

@@ -1,0 +1,228 @@
+# Chat Source Nodes Implementation - Remaining Phases PRD
+
+## Project Overview
+Complete the implementation of chat source nodes feature to expose graph nodes and documents that the LLM used to generate responses in a unified tabbed interface.
+
+**Status:** Phase 1 (Backend Data) completed - source_nodes extraction implemented in Python backend with tests.
+
+## Remaining Implementation Phases
+
+### Phase 2: Proxy Server Integration
+**Objective:** Update Node.js proxy server to propagate source_nodes from Python responses
+
+**Requirements:**
+- Modify chatController.js to extract source_nodes from Python backend responses
+- Add source_nodes field to response JSON alongside sourceDocuments
+- Maintain backward compatibility with existing sourceDocuments
+- Add error handling for missing source_nodes field
+- Update response logging to include node count
+
+**Acceptance Criteria:**
+- Proxy server forwards source_nodes array from Python to frontend
+- Response structure includes both sourceDocuments and sourceNodes fields
+- Error responses include empty sourceNodes array
+- Logging captures source node statistics
+
+### Phase 3: TypeScript Interfaces & Context State
+**Objective:** Update ChatContext and TypeScript interfaces to handle sourceNodes
+
+**Requirements:**
+- Create SourceNode interface with id, name, labels fields
+- Update ChatMessage interface to include sourceNodes field
+- Extend chatReducer to handle sourceNodes in ADD_MESSAGE action
+- Maintain type safety throughout the application
+- Update chatApiService to handle sourceNodes field
+
+**Acceptance Criteria:**
+- TypeScript interfaces properly define SourceNode structure
+- ChatContext stores and manages sourceNodes for each message
+- No TypeScript compilation errors
+- Type safety maintained across components
+
+### Phase 4: MessageReferences Component
+**Objective:** Create new MessageReferences component to replace DocumentReferences with tabbed interface
+
+**Requirements:**
+- Create MessageReferences.jsx with tabs for Sources/Nodes/All
+- Implement tab switching functionality
+- Show document count and node count in tab labels
+- Maintain styling consistent with existing DocumentReferences
+- Handle empty states for both documents and nodes
+
+**Acceptance Criteria:**
+- Tabbed interface switches between Sources, Nodes, and All views
+- Tab labels show accurate counts (e.g., "Sources (3)", "Nodes (5)")
+- Clean fallback to document-only display when no nodes available
+- Responsive design matches current styling
+
+### Phase 5: NodeChip Component
+**Objective:** Create NodeChip component to display individual graph nodes
+
+**Requirements:**
+- Create NodeChip.jsx to display node information
+- Show node name, ID, and labels as pills/badges
+- Implement hover tooltips for detailed information
+- Apply consistent styling with document icons
+- Handle click interactions for future node selection
+
+**Acceptance Criteria:**
+- NodeChip displays node name prominently
+- Labels shown as colored badges/pills
+- Hover reveals node ID and detailed information
+- Click handling ready for future graph interaction
+- Accessible with proper ARIA labels
+
+### Phase 6: ChatView Integration
+**Objective:** Replace DocumentReferences with MessageReferences in ChatView
+
+**Requirements:**
+- Update ChatView.jsx to use MessageReferences component
+- Pass both sourceDocuments and sourceNodes props
+- Remove DocumentReferences import and usage
+- Ensure backward compatibility with existing chat messages
+- Maintain consistent spacing and layout
+
+**Acceptance Criteria:**
+- Chat messages display new tabbed reference interface
+- Existing chat history continues to show document references
+- Layout and spacing remain consistent
+- No visual regressions in chat interface
+
+### Phase 7: CSS Styling Implementation
+**Objective:** Implement complete styling for tabbed interface and node components
+
+**Requirements:**
+- Create MessageReferences.css with tab styling
+- Create NodeChip.css for node display styling
+- Implement hover effects and transitions
+- Ensure responsive design for mobile/tablet
+- Match 360T design system colors and typography
+
+**Acceptance Criteria:**
+- Professional tabbed interface with smooth transitions
+- Node chips have consistent hover/focus states
+- Responsive design works on all screen sizes
+- Styling matches existing 360T design patterns
+- Proper color contrast for accessibility
+
+### Phase 8: Error Handling & Edge Cases
+**Objective:** Implement comprehensive error handling for source nodes
+
+**Requirements:**
+- Handle malformed sourceNodes data gracefully
+- Provide fallback when sourceNodes is missing
+- Display appropriate empty states
+- Log client-side errors for debugging
+- Implement loading states for slow responses
+
+**Acceptance Criteria:**
+- Application doesn't crash with malformed source node data
+- Graceful degradation when sourceNodes unavailable
+- Clear empty state messages for users
+- Proper error logging for debugging
+- Loading indicators during data fetching
+
+### Phase 9: Component Unit Testing
+**Objective:** Create comprehensive unit tests for new React components
+
+**Requirements:**
+- Unit tests for MessageReferences component
+- Unit tests for NodeChip component
+- Test tab switching functionality
+- Test prop handling and edge cases
+- Mock data for consistent testing
+
+**Acceptance Criteria:**
+- MessageReferences tests cover all tab states
+- NodeChip tests cover all node data variations
+- Tests achieve >90% code coverage
+- Tests run successfully in CI/CD pipeline
+- Mock data represents realistic scenarios
+
+### Phase 10: Integration Testing
+**Objective:** Test complete flow from Python backend to React frontend
+
+**Requirements:**
+- End-to-end test for source nodes flow
+- Integration test for proxy server handling
+- Test ChatContext state management
+- Verify data integrity through the pipeline
+- Performance testing for large node sets
+
+**Acceptance Criteria:**
+- Complete flow test from chat query to node display
+- Integration tests pass in CI/CD environment
+- State management tests confirm data integrity
+- Performance acceptable with 15+ nodes
+- Error scenarios properly tested
+
+### Phase 11: Accessibility Compliance
+**Objective:** Ensure WCAG 2.1 AA compliance for new components
+
+**Requirements:**
+- Screen reader support for tabs and nodes
+- Keyboard navigation for tabbed interface
+- Proper ARIA labels and roles
+- Color contrast compliance
+- Focus management and indicators
+
+**Acceptance Criteria:**
+- Screen readers announce tab changes and content
+- Full keyboard navigation without mouse
+- ARIA labels provide context for all interactive elements
+- Color contrast meets WCAG 2.1 AA standards
+- Focus indicators clearly visible
+
+### Phase 12: Performance Optimization
+**Objective:** Optimize performance for source nodes rendering
+
+**Requirements:**
+- Implement React.memo for components
+- Optimize re-renders with useMemo/useCallback
+- Lazy loading for large node sets
+- Efficient state updates in ChatContext
+- Bundle size optimization
+
+**Acceptance Criteria:**
+- Components only re-render when necessary
+- Smooth performance with 15+ nodes per message
+- No memory leaks in long chat sessions
+- Bundle size increase <10KB
+- Lighthouse performance score maintained
+
+### Phase 13: Manual QA & Documentation
+**Objective:** Complete manual testing and update documentation
+
+**Requirements:**
+- Manual QA testing across all supported browsers
+- Mobile/tablet device testing
+- Documentation updates for new features
+- User experience validation
+- Performance validation on various devices
+
+**Acceptance Criteria:**
+- Feature works correctly in Chrome, Firefox, Safari, Edge
+- Mobile experience is intuitive and responsive
+- Documentation accurately reflects new functionality
+- User feedback is positive
+- Performance meets requirements on all test devices
+
+## Technical Constraints
+- Must maintain backward compatibility with existing chat messages
+- Cannot break existing Neo4j connection or Python backend
+- Must follow existing 360T design patterns
+- TypeScript compilation must succeed
+- All tests must pass
+
+## Success Metrics
+- Source nodes display correctly in 100% of chat responses
+- No regression in chat response times
+- User can switch between Sources/Nodes/All tabs seamlessly
+- Zero accessibility violations
+- Component test coverage >90%
+
+## Dependencies
+- Phase 1 (Backend Data) completed ✅
+- Neo4j knowledge graph operational
+- React/TypeScript frontend functional
+- Node.js proxy server operational 

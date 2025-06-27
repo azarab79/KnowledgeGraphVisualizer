@@ -40,8 +40,21 @@ const relationshipValidation = [
     handleValidationErrors
 ];
 
+const hiddenLinksQueryValidation = [
+    query('topN')
+        .optional()
+        .isInt({ min: 1, max: 1000 })
+        .withMessage('topN must be an integer between 1 and 1000'),
+    query('threshold')
+        .optional()
+        .isFloat({ min: 0.0, max: 1.0 })
+        .withMessage('threshold must be a float between 0 and 1'),
+    handleValidationErrors
+];
+
 module.exports = {
     graphQueryValidation,
     nodeValidation,
-    relationshipValidation
+    relationshipValidation,
+    hiddenLinksQueryValidation
 }; 

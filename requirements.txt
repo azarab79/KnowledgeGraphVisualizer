@@ -1,0 +1,41 @@
+# Core dependencies
+pydantic
+pydantic-settings
+langchain
+langchain-google-genai
+langchain-neo4j
+langchain-core
+langchain-community
+graphiti-core
+# Additional providers for LLM abstraction layer
+langchain-ollama
+langchain-openai
+
+# Google Generative AI (Gemini)
+google-generativeai
+
+# Neo4j driver
+neo4j
+
+# FastAPI and web server dependencies
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart
+
+# For type hints and linting (optional, but recommended)
+typing-extensions
+
+# For running as a script
+python-dotenv  # If you want to load env vars from .env files
+
+# HTTP client for making requests
+httpx
+requests
+
+# Testing dependencies
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+httpx>=0.24.0  # For async testing with FastAPI
+
+# For regex and other stdlib features (no install needed)
+# re 

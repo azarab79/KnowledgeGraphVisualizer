@@ -4,6 +4,17 @@ import { searchNodes } from '../services/api';
 // Debug mode constant - set to true to enable debug output in console
 const DEBUG_MODE = true;
 
+// Default node type to color mapping
+const defaultNodeColors = {
+  'Module': '#4f46e5',      // deep indigo
+  'Product': '#059669',     // deep emerald
+  'Workflow': '#d97706',    // deep amber
+  'UI_Area': '#7c3aed',     // deep violet
+  'ConfigurationItem': '#db2777', // deep pink
+  'TestCase': '#dc2626',    // deep red
+  'Default': '#4b5563',     // deep gray
+};
+
 /**
  * Search bar component for searching nodes in the knowledge graph
  * @param {Object} props - Component props
@@ -251,6 +262,14 @@ function SearchBar({ onSearchResults, onNodeSelect }) {
            'Unknown Node';
   };
 
+  /**
+   * Get node color for suggestion styling
+   */
+  const getNodeColor = (suggestion) => {
+    const nodeType = getNodeType(suggestion);
+    return defaultNodeColors[nodeType] || defaultNodeColors.Default;
+  };
+
   // Handle input focus - memoized to prevent recreating function on every render
   const handleInputFocus = useCallback(() => {
     if (query.trim().length >= 2) {
@@ -271,160 +290,52 @@ function SearchBar({ onSearchResults, onNodeSelect }) {
   }, [networkError, noResults]);
 
   return (
-    <div className="search-container">
-      <form onSubmit={handleSubmit} className="search-form" onClick={handleInteraction}>
-        <div className="search-input-container">
-          <input
-            ref={inputRef}
-            type="text"
-            className={`search-input ${networkError ? 'network-error' : ''} ${noResults ? 'no-results' : ''}`}
-            placeholder="Search for modules, products, test cases... (case insensitive)"
-            value={query}
-            onChange={handleInputChange}
-            onFocus={handleInputFocus}
-            disabled={isLoading}
-            autoComplete="off"
-          />
-          
-          {/* Suggestions dropdown */}
-          {showSuggestions && suggestions.length > 0 && (
-            <ul 
-              ref={suggestionsRef}
-              className="search-suggestions"
-            >
-              {suggestions.map((suggestion) => (
-                <li 
-                  key={suggestion.id}
-                  className={`suggestion-item ${getNodeType(suggestion).toLowerCase()}`}
-                  onClick={() => handleSelectSuggestion(suggestion)}
-                >
-                  <div className="suggestion-content">
-                    <span className="suggestion-name">
-                      {getNodeName(suggestion)}
-                    </span>
-                    <span className="suggestion-type">
-                      {getNodeType(suggestion)}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        
-        <button 
-          type="submit" 
-          className="search-button"
-          disabled={isLoading || !query.trim()}
-        >
+    <div className="search-bar-container" ref={suggestionsRef}>
+      <form onSubmit={handleSubmit} className="search-form">
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={handleInputChange}
+          placeholder="Search for modules, products, test cases... (case insensitive)"
+          className="search-input"
+          onFocus={() => {
+            if (suggestions.length > 0) setShowSuggestions(true);
+          }}
+        />
+        <button type="submit" className="search-button" disabled={isLoading || !query.trim()}>
           {isLoading ? (
-            <span className="loading-spinner"></span>
+            <div className="loader"></div>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
           )}
         </button>
       </form>
-      {error && <div className="search-error">{error}</div>}
-      {networkError && <div className="network-error-message">
-        Network connection issues detected. Your searches might be slower than usual.
-      </div>}
-      {noResults && !error && !networkError && <div className="no-results-message">
-        No results found. Try a different search term.
-      </div>}
 
-      <style jsx>{`
-        .search-input {
-          width: 100%;
-          padding: 10px 15px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          font-size: 16px;
-          transition: border-color 0.3s;
-        }
-        
-        .search-input:focus {
-          border-color: #00973A;
-          outline: none;
-          box-shadow: 0 0 0 2px rgba(0, 151, 58, 0.2);
-        }
-        
-        .network-error {
-          border-color: #e53e3e;
-        }
-        
-        .no-results {
-          border-color: #f6ad55;
-        }
-        
-        .network-error-message {
-          padding: 8px;
-          margin-top: 8px;
-          background-color: #fff5f5;
-          border: 1px solid #feb2b2;
-          border-radius: 4px;
-          color: #e53e3e;
-          font-size: 14px;
-        }
-        
-        .no-results-message {
-          padding: 8px;
-          margin-top: 8px;
-          background-color: #fffbeb;
-          border: 1px solid #fbd38d;
-          border-radius: 4px;
-          color: #c05621;
-          font-size: 14px;
-        }
-        
-        .search-suggestions {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
-          max-height: 300px;
-          overflow-y: auto;
-          background: white;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-          z-index: 10;
-          margin: 4px 0 0 0;
-          padding: 0;
-          list-style: none;
-        }
-        
-        .suggestion-item {
-          padding: 10px;
-          cursor: pointer;
-          border-bottom: 1px solid #eee;
-          transition: background-color 0.2s;
-        }
-        
-        .suggestion-item:hover {
-          background-color: #f9fafb;
-        }
-        
-        .suggestion-content {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        
-        .suggestion-name {
-          font-weight: 500;
-        }
-        
-        .suggestion-type {
-          font-size: 0.85em;
-          padding: 2px 6px;
-          background: #edf2f7;
-          border-radius: 4px;
-          color: #4a5568;
-        }
-      `}</style>
+      {showSuggestions && (
+        <ul className="suggestions-list">
+          {networkError && <li className="suggestion-item error">Network error. Please check connection.</li>}
+          {noResults && <li className="suggestion-item no-results">No results found for "{query}"</li>}
+          
+          {!networkError && !noResults && suggestions.map((suggestion, index) => (
+            <li
+              key={`${suggestion.id}-${index}`}
+              className="suggestion-item"
+              onMouseDown={() => handleSelectSuggestion(suggestion)}
+            >
+              <span className="suggestion-name">
+                {getNodeName(suggestion)}
+              </span>
+              <span className="suggestion-type" style={{ backgroundColor: getNodeColor(suggestion) }}>
+                {getNodeType(suggestion)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

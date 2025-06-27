@@ -5,6 +5,7 @@ node_modules/
 
 # Testing
 coverage/
+test-results/
 
 # Production
 build/
@@ -21,13 +22,19 @@ dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-server.log
+*.log
 
 # IDE
 .idea/
 .vscode/
+.cursor/
 *.swp
 *.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # OS
 .DS_Store
@@ -36,3 +43,46 @@ Thumbs.db
 # Neo4j
 data/
 logs/
+neo4j.conf
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+fastapi_env/
+
+# Task management and configuration
+tasks.json
+tasks/
+.taskmaster/
+.taskmaster.json
+.roo/
+.roomodes
+.windsurfrules
+
+# API and process files
+*.pid
+.api.pid
+
+# Sensitive configuration files
+*_super_secret_config.yaml
+google-cloud-cli-*.tar.gz
+google-cloud-sdk/
+
+# Large files and archives
+*.tar.gz
+*.zip
+*.rar
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Project specific
+=9.0.0

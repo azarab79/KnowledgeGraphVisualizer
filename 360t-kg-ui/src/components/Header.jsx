@@ -1,4 +1,5 @@
 import React from 'react';
+import * as d3 from 'd3';
 import { getInitialGraph } from '../services/api';
 import '../styles/360t-theme.css';
 import logo from '../assets/logos/360T-logo.png';
@@ -6,21 +7,51 @@ import logo from '../assets/logos/360T-logo.png';
 /**
  * Header component with logo, title and main navigation
  */
-function Header() {
-  const handleExplorerClick = async () => {
-    try {
-      window.dispatchEvent(new CustomEvent('loadInitialGraph'));
-    } catch (error) {
-      console.error('Error loading initial graph:', error);
+function Header({ currentView, onSwitchView }) {
+  // Enhanced cleanup function for tooltips
+  const cleanupTooltips = () => {
+    // Remove all D3 tooltips
+    d3.select("body").selectAll(".document-tooltip").remove();
+    // Remove React tooltips  
+    document.querySelectorAll('.custom-tooltip, .node-chip-tooltip').forEach(el => el.remove());
+  };
+
+  const handleNavClick = (view) => {
+    // Clean up tooltips before switching views
+    cleanupTooltips();
+    
+    if (onSwitchView) {
+      onSwitchView(view);
+      
+      // For explorer view, also trigger initial graph loading
+      // This ensures the full graph is displayed when switching to explorer
+      if (view === 'explorer') {
+        // Use a delay to ensure the view state is updated first
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('loadInitialGraph'));
+        }, 100);
+      }
+    } else {
+      // Fallback for standalone use (optional)
+      let eventName;
+      switch (view) {
+        case 'explorer':
+          eventName = 'loadInitialGraph';
+          break;
+        case 'analysis':
+          eventName = 'showAnalysis';
+          break;
+        case 'documentation':
+          eventName = 'showDocumentation';
+          break;
+        case 'chat':
+          eventName = 'showChat';
+          break;
+        default:
+          return;
+      }
+      window.dispatchEvent(new CustomEvent(eventName));
     }
-  };
-
-  const handleAnalysisClick = () => {
-    window.dispatchEvent(new CustomEvent('showAnalysis'));
-  };
-
-  const handleDocumentationClick = () => {
-    window.dispatchEvent(new CustomEvent('showDocumentation'));
   };
 
   return (
@@ -31,10 +62,10 @@ function Header() {
       </div>
       <nav className="main-nav">
         <ul>
-          <li><button className="nav-button active">Dashboard</button></li>
-          <li><button className="nav-button" onClick={handleExplorerClick}>Explorer</button></li>
-          <li><button className="nav-button" onClick={handleAnalysisClick}>Analysis</button></li>
-          <li><button className="nav-button" onClick={handleDocumentationClick}>Documentation</button></li>
+          <li><button className={`nav-button ${currentView === 'explorer' ? 'active' : ''}`} onClick={() => handleNavClick('explorer')}>Explorer</button></li>
+          <li><button className={`nav-button ${currentView === 'analysis' ? 'active' : ''}`} onClick={() => handleNavClick('analysis')}>Analysis</button></li>
+          <li><button className={`nav-button ${currentView === 'chat' ? 'active' : ''}`} onClick={() => handleNavClick('chat')}>Chat</button></li>
+          <li><button className={`nav-button ${currentView === 'documentation' ? 'active' : ''}`} onClick={() => handleNavClick('documentation')}>Documentation</button></li>
         </ul>
       </nav>
       <div className="user-controls">

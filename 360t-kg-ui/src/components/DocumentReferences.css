@@ -1,0 +1,69 @@
+/* DocumentReferences Component Styles */
+
+.document-references {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  background-color: rgba(0, 151, 58, 0.05);
+  border: 1px solid rgba(0, 151, 58, 0.2);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--360t-dark-gray, #6c757d);
+}
+
+.document-references-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  color: var(--360t-primary, #00973a);
+  font-weight: 500;
+}
+
+.document-references-label svg {
+  color: var(--360t-primary, #00973a);
+}
+
+.document-references-label span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.document-icons-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .document-references {
+    gap: 6px;
+    padding: 4px 6px;
+  }
+  
+  .document-references-label span {
+    font-size: 10px;
+  }
+  
+  .document-icons-container {
+    gap: 3px;
+  }
+}
+
+@media (max-width: 480px) {
+  .document-references {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .document-icons-container {
+    align-self: stretch;
+    justify-content: flex-start;
+  }
+} 

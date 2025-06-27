@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const neo4j = require('neo4j-driver');
@@ -5,6 +7,7 @@ const morgan = require('morgan');
 const path = require('path');
 const dotenv = require('dotenv');
 const fs = require('fs');
+const { register: metricsRegister } = require('./utils/metrics');
 
 // Load environment variables
 dotenv.config();
@@ -57,14 +60,13 @@ const initNeo4j = async (retries = 5, delay = 2000) => {
     for (let i = 0; i < retries; i++) {
         try {
             const driver = neo4j.driver(
-                process.env.NEO4J_URI || 'neo4j://localhost:7695',
+                process.env.NEO4J_URI || 'neo4j://localhost:7687',
                 neo4j.auth.basic(
                     process.env.NEO4J_USERNAME || 'neo4j',
                     process.env.NEO4J_PASSWORD
                 )
             );
             await driver.verifyConnectivity();
-            console.log('Successfully connected to Neo4j');
             return driver;
         } catch (error) {
             console.error(`Failed to connect to Neo4j (attempt ${i + 1}/${retries}):`, error.message);
@@ -84,9 +86,15 @@ initNeo4j()
     .then(d => { 
         driver = d;
         
-        // Import route modules
+        // Create repository instance
+        const GraphRepository = require('./src/repositories/GraphRepository');
+        const graphRepo = new GraphRepository(driver, process.env.NEO4J_DATABASE || 'neo4j');
+        
+        // Import route modules with repository
         const graphRoutes = require('./routes/graph')(driver);
-        const analysisRoutes = require('./routes/analysis')(driver);
+        const analysisRoutes = require('./routes/analysis')(graphRepo);
+        const settingsRoutes = require('./routes/settings')(driver);
+        const chatRoutes = require('./routes/chatRoutes')(driver);
         
         // API endpoints
         app.get('/api/health', (req, res) => {
@@ -134,9 +142,17 @@ initNeo4j()
             }
         });
         
+        // --- Metrics endpoint (Prometheus-compatible) ---
+        app.get('/metrics', async (req, res) => {
+            res.set('Content-Type', metricsRegister.contentType);
+            res.end(await metricsRegister.metrics());
+        });
+        
         // Use routes
         app.use('/api/graph', graphRoutes);
         app.use('/api/analysis', analysisRoutes);
+        app.use('/api/settings', settingsRoutes);
+        app.use('/api/chat', chatRoutes);
         
         // Static files
         app.use(express.static(path.join(__dirname, 'public')));
@@ -187,9 +203,11 @@ const shutdown = async () => {
         if (server) {
             server.close(() => {
                 console.log('HTTP server closed');
+                releaseLock();
                 process.exit(0);
             });
         } else {
+            releaseLock();
             process.exit(0);
         }
     } catch (error) {
@@ -202,6 +220,45 @@ process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
 let server;  // Define server variable outside for use in shutdown
+
+// --- Single-instance lock (prevents EADDRINUSE restart loop) ---
+const LOCK_FILE = path.join(__dirname, '.api.pid');
+
+function acquireLock() {
+  try {
+    if (fs.existsSync(LOCK_FILE)) {
+      const existingPid = parseInt(fs.readFileSync(LOCK_FILE, 'utf8'), 10);
+      if (existingPid && !Number.isNaN(existingPid)) {
+        try {
+          // Signal 0 just checks if the process exists
+          process.kill(existingPid, 0);
+          console.error(`Another API instance is already running (PID ${existingPid}). Exiting.`);
+          process.exit(1);
+        } catch (_) {
+          // Stale PID file – process not running
+          fs.unlinkSync(LOCK_FILE);
+        }
+      }
+    }
+    fs.writeFileSync(LOCK_FILE, process.pid.toString());
+  } catch (err) {
+    console.error('Failed to create lock file:', err);
+    process.exit(1);
+  }
+}
+
+function releaseLock() {
+  try {
+    if (fs.existsSync(LOCK_FILE)) {
+      fs.unlinkSync(LOCK_FILE);
+    }
+  } catch (err) {
+    console.warn('Failed to remove lock file:', err);
+  }
+}
+
+acquireLock();
+process.once('exit', releaseLock);
 
 // Export for testing
 module.exports = { app, driver }; 

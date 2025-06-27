@@ -1,0 +1,316 @@
+openapi: 3.0.3
+info:
+  title: Knowledge Graph Chat API
+  description: API for chat functionality with knowledge graph integration
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@360t.com
+
+servers:
+  - url: http://localhost:8000
+    description: Development server (Python FastAPI)
+  - url: http://localhost:3002/api
+    description: Production server (Node.js proxy)
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the chat API service
+      operationId: getHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /chat:
+    post:
+      summary: Send a chat message
+      description: Send a message to the knowledge graph chat system and receive an AI-generated response
+      operationId: sendChatMessage
+      tags:
+        - Chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /chat/history:
+    get:
+      summary: Get chat history
+      description: Retrieve the conversation history for a specific session
+      operationId: getChatHistory
+      tags:
+        - Chat
+      parameters:
+        - name: session_id
+          in: query
+          required: false
+          description: Session ID to retrieve history for
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of messages to return
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Chat history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatHistoryResponse'
+
+  /chat/suggestions:
+    get:
+      summary: Get suggested questions
+      description: Get AI-generated question suggestions based on the knowledge graph content
+      operationId: getSuggestions
+      tags:
+        - Chat
+      parameters:
+        - name: context
+          in: query
+          required: false
+          description: Context for generating relevant suggestions
+          schema:
+            type: string
+        - name: count
+          in: query
+          required: false
+          description: Number of suggestions to return
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
+            maximum: 10
+      responses:
+        '200':
+          description: Suggestions generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuggestionsResponse'
+
+components:
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: The user's message/question
+          example: "What are the main relationships between companies and products?"
+        session_id:
+          type: string
+          description: Session identifier for conversation continuity
+          example: "sess_123456789"
+        context:
+          type: object
+          description: Additional context for the query
+          properties:
+            include_history:
+              type: boolean
+              default: true
+              description: Whether to include conversation history in the response
+            max_tokens:
+              type: integer
+              default: 1000
+              description: Maximum tokens for the response
+            temperature:
+              type: number
+              default: 0.7
+              minimum: 0.0
+              maximum: 1.0
+              description: AI response creativity level
+
+    ChatResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          description: AI-generated response
+          example: "Based on the knowledge graph, I can see several key relationships..."
+        session_id:
+          type: string
+          description: Session identifier
+          example: "sess_123456789"
+        context:
+          type: object
+          description: Response context and metadata
+          properties:
+            source_nodes:
+              type: array
+              items:
+                $ref: '#/components/schemas/GraphNode'
+              description: Graph nodes used to generate the response
+            relationships_used:
+              type: array
+              items:
+                $ref: '#/components/schemas/GraphRelationship'
+              description: Graph relationships referenced in the response
+            confidence_score:
+              type: number
+              minimum: 0.0
+              maximum: 1.0
+              description: Confidence score for the response
+            cypher_query:
+              type: string
+              description: The Cypher query used to retrieve information
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: Follow-up question suggestions
+          example: ["Can you tell me more about specific companies?", "What products are most connected?"]
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+
+    ChatHistoryResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        session_id:
+          type: string
+        total_count:
+          type: integer
+          description: Total number of messages in the conversation
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique message identifier
+        role:
+          type: string
+          enum: [user, assistant]
+          description: Who sent the message
+        content:
+          type: string
+          description: Message content
+        timestamp:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          description: Additional message metadata
+
+    SuggestionsResponse:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: List of suggested questions
+          example: 
+            - "What are the main product categories in the graph?"
+            - "Which companies have the most connections?"
+            - "Show me the relationship patterns between entities"
+
+    GraphNode:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Node identifier
+        labels:
+          type: array
+          items:
+            type: string
+          description: Node labels
+        properties:
+          type: object
+          description: Node properties
+
+    GraphRelationship:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Relationship identifier
+        type:
+          type: string
+          description: Relationship type
+        source:
+          type: string
+          description: Source node ID
+        target:
+          type: string
+          description: Target node ID
+        properties:
+          type: object
+          description: Relationship properties
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+        details:
+          type: object
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Chat
+    description: Chat functionality endpoints 

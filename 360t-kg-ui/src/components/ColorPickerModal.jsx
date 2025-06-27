@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
 import * as d3 from 'd3';
 
-// Array of available shapes
+/**
+ * List of available node shapes.
+ * 
+ * Includes:
+ * - D3 built-in symbols (circle, square, triangle, diamond, star, wye, cross)
+ * - SVG icons from /public/svg directory, prefixed with 'svg:'
+ * 
+ * The shape picker displays a preview icon next to each option.
+ * When an SVG icon is selected, it is rendered as an <image> in the graph.
+ */
 const shapeOptions = [
   { id: 'circle', label: 'Circle' },
   { id: 'square', label: 'Square' },
@@ -9,7 +18,35 @@ const shapeOptions = [
   { id: 'diamond', label: 'Diamond' },
   { id: 'star', label: 'Star' },
   { id: 'wye', label: 'Y Shape' },
-  { id: 'cross', label: 'Cross' }
+  { id: 'cross', label: 'Cross' },
+  // SVG icons
+  { id: 'svg:bank-banking-finance-svgrepo-com.svg', label: 'Bank Icon' },
+  { id: 'svg:business-connection-connect-communication-teamwork-people-svgrepo-com.svg', label: 'Teamwork' },
+  { id: 'svg:business-finance-corporate-svgrepo-com.svg', label: 'Business Finance' },
+  { id: 'svg:configuration-gear-options-preferences-settings-system-svgrepo-com.svg', label: 'Settings Gear' },
+  { id: 'svg:database-svgrepo-com.svg', label: 'Database' },
+  { id: 'svg:diagram-business-presentation-chart-graph-infographic-svgrepo-com.svg', label: 'Diagram Chart' },
+  { id: 'svg:diploma-verified-svgrepo-com.svg', label: 'Diploma Verified' },
+  { id: 'svg:dollar-finance-money-29-svgrepo-com.svg', label: 'Dollar 29' },
+  { id: 'svg:dollar-finance-money-38-svgrepo-com.svg', label: 'Dollar 38' },
+  { id: 'svg:dollar-finance-money-40-svgrepo-com.svg', label: 'Dollar 40' },
+  { id: 'svg:dollar-finance-money-41-svgrepo-com.svg', label: 'Dollar 41' },
+  { id: 'svg:dollar-finance-money-44-svgrepo-com.svg', label: 'Dollar 44' },
+  { id: 'svg:dollar-finance-money-47-svgrepo-com.svg', label: 'Dollar 47' },
+  { id: 'svg:finance-book-svgrepo-com.svg', label: 'Finance Book' },
+  { id: 'svg:finance-department-trader-trading-cfo-svgrepo-com.svg', label: 'Finance Trader' },
+  { id: 'svg:finance-markting-money-coin-dollar-molecule-svgrepo-com.svg', label: 'Finance Marketing' },
+  { id: 'svg:finance-svgrepo-com.svg', label: 'Finance' },
+  { id: 'svg:finance-symbol-of-four-currencies-on-a-hand-svgrepo-com.svg', label: 'Currencies on Hand' },
+  { id: 'svg:hierarchy-svgrepo-com.svg', label: 'Hierarchy' },
+  { id: 'svg:money-bag-finance-business-svgrepo-com.svg', label: 'Money Bag' },
+  { id: 'svg:noteminor-svgrepo-com.svg', label: 'Note Minor' },
+  { id: 'svg:power-svgrepo-com.svg', label: 'Power' },
+  { id: 'svg:search-svgrepo-com.svg', label: 'Search' },
+  { id: 'svg:system-svgrepo-com.svg', label: 'System' },
+  { id: 'svg:user-alt-1-svgrepo-com.svg', label: 'User Alt' },
+  { id: 'svg:user-interface-svgrepo-com.svg', label: 'User Interface' },
+  { id: 'svg:workflow-svgrepo-com.svg', label: 'Workflow' }
 ];
 
 // Map shape names to d3 symbol types for preview rendering
@@ -24,16 +61,24 @@ const shapeMap = {
 };
 
 /**
- * Modal for picking colors and customizing node appearance
+/**
+ * Modal for picking colors, sizes, and shapes for nodes or relationships.
+ * 
+ * Features:
+ * - Color picker input
+ * - Size slider (nodes only)
+ * - Shape selector with icon previews (nodes only)
+ *   - Supports D3 symbols and SVG icons
+ *   - Displays a small icon next to each shape option
+ * - Live preview of the selected shape and color
+ * 
  * @param {Object} props - Component props
  * @param {string} props.type - Node or relationship type to customize
  * @param {boolean} props.isNodeType - Whether this is a node type (vs relationship)
  * @param {string} props.initialColor - Initial color
  * @param {number} props.initialSize - Initial size (for nodes)
- * @param {string} props.initialShape - Initial shape name (for nodes)
- * @param {function} props.onColorChange - Callback for color change
- * @param {function} props.onSizeChange - Callback for size change (for nodes) 
- * @param {function} props.onShapeChange - Callback for shape change (for nodes)
+ * @param {string|function} props.initialShape - Initial shape (name string or D3 symbol function)
+ * @param {function} props.onApply - Callback when changes are applied
  * @param {function} props.onClose - Callback to close modal
  */
 const ColorPickerModal = ({ 
@@ -42,29 +87,24 @@ const ColorPickerModal = ({
   initialColor, 
   initialSize,
   initialShape,
-  onColorChange, 
-  onSizeChange,
-  onShapeChange,
+  onApply, // Replaced individual callbacks with onApply
   onClose 
 }) => {
   const [color, setColor] = useState(initialColor || '#4f46e5');
   const [size, setSize] = useState(initialSize || 20);
   const [shape, setShape] = useState(() => {
-    // Handle string shapes
+    if (!isNodeType && typeof initialShape === 'string') {
+      return 'solid'; // for relationships, default to solid line style
+    }
     if (typeof initialShape === 'string') {
       return initialShape;
     }
-    
-    // Handle function shapes (for backward compatibility)
     if (typeof initialShape === 'function') {
-      // Try to find matching shape by comparing function references
       for (const [key, func] of Object.entries(shapeMap)) {
         if (func.toString() === initialShape.toString()) {
           return key;
         }
       }
-      
-      // Look for function name in string representation
       const funcString = initialShape.toString();
       if (funcString.includes('symbolCircle')) return 'circle';
       if (funcString.includes('symbolSquare')) return 'square';
@@ -74,10 +114,11 @@ const ColorPickerModal = ({
       if (funcString.includes('symbolWye')) return 'wye';
       if (funcString.includes('symbolCross')) return 'cross';
     }
-    
-    // Default to circle
     return 'circle';
   });
+  const [lineStyle, setLineStyle] = useState(
+    typeof initialShape === 'string' && !isNodeType ? initialShape : 'solid'
+  );
 
   // Handle color change
   const handleColorChange = (e) => {
@@ -104,43 +145,15 @@ const ColorPickerModal = ({
       shape 
     });
     
-    // Always apply color changes first with a short timeout to ensure DOM updates
-    if (onColorChange) {
-      console.log(`ColorPickerModal: Calling onColorChange with type=${type}, color=${color}`);
-      
-      // Apply the color change immediately
-      onColorChange(type, color);
-      
-      // Brief delay before closing to ensure changes are processed
-      setTimeout(() => {
-        if (isNodeType && onSizeChange) {
-          console.log(`ColorPickerModal: Calling onSizeChange with type=${type}, size=${size}`);
-          onSizeChange(type, size);
-        }
-        
-        if (isNodeType && onShapeChange) {
-          console.log(`ColorPickerModal: Calling onShapeChange with type=${type}, shape=${shape}`);
-          onShapeChange(type, shape);
-        }
-        
-        onClose();
-      }, 100);
-      
-      return;
+    // Call the single onApply callback with all changes
+    if (onApply) {
+      onApply(type, { 
+        color, 
+        size: isNodeType ? size : undefined, // Only pass size for nodes
+        shape: isNodeType ? shape : lineStyle  // For relationships, shape holds line style string
+      });
     }
-    
-    // If no color change handler, apply other changes and close
-    if (isNodeType && onSizeChange) {
-      console.log(`ColorPickerModal: Calling onSizeChange with type=${type}, size=${size}`);
-      onSizeChange(type, size);
-    }
-    
-    if (isNodeType && onShapeChange) {
-      console.log(`ColorPickerModal: Calling onShapeChange with type=${type}, shape=${shape}`);
-      onShapeChange(type, shape);
-    }
-    
-    onClose();
+    onClose(); // Close the modal after applying
   };
 
   // Draw the shape preview
@@ -160,14 +173,24 @@ const ColorPickerModal = ({
         <div className="modal-body">
           <div className="preview" style={{ marginBottom: '20px', textAlign: 'center' }}>
             <div className="shape-preview" style={{ margin: '0 auto', width: '60px', height: '60px' }}>
-              <svg width="60" height="60" viewBox="-30 -30 60 60">
-                <path 
-                  d={getShapePath(shape, size)} 
-                  fill={color} 
-                  stroke="#fff" 
-                  strokeWidth="2"
-                />
-              </svg>
+              {shape.startsWith('svg:') ? (
+                <svg width="60" height="60" viewBox="-30 -30 60 60">
+                  <image 
+                    href={`/svg/${shape.substring(4)}`} 
+                    x="-20" y="-20" width="40" height="40" 
+                    preserveAspectRatio="xMidYMid meet"
+                  />
+                </svg>
+              ) : (
+                <svg width="60" height="60" viewBox="-30 -30 60 60">
+                  <path 
+                    d={getShapePath(shape, size)} 
+                    fill={color} 
+                    stroke="#fff" 
+                    strokeWidth="2"
+                  />
+                </svg>
+              )}
             </div>
           </div>
           
@@ -182,7 +205,7 @@ const ColorPickerModal = ({
             />
           </div>
           
-          {isNodeType && (
+          {isNodeType ? (
             <>
               <div className="form-group">
                 <label htmlFor="sizeRange">Size: {size}</label>
@@ -198,18 +221,72 @@ const ColorPickerModal = ({
               </div>
               
               <div className="form-group">
-                <label htmlFor="shapeSelect">Shape:</label>
-                <select 
-                  id="shapeSelect" 
-                  value={shape}
-                  onChange={handleShapeChange} 
-                  className="shape-select"
-                >
+                <label>Shape:</label>
+                <div className="custom-shape-picker" style={{
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  maxHeight: '150px',
+                  overflowY: 'auto',
+                  padding: '4px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}>
                   {shapeOptions.map(option => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
+                    <div
+                      key={option.id}
+                      onClick={() => setShape(option.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '4px 6px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        backgroundColor: shape === option.id ? '#e0f2fe' : 'transparent',
+                        border: shape === option.id ? '1px solid #00973A' : '1px solid transparent'
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="-8 -8 16 16">
+                        {option.id.startsWith('svg:') ? (
+                          <image
+                            href={`/svg/${option.id.substring(4)}`}
+                            x="-8" y="-8" width="16" height="16"
+                            preserveAspectRatio="xMidYMid meet"
+                          />
+                        ) : (
+                          <path
+                            d={d3.symbol()
+                              .type(
+                                d3[`symbol${option.id[0].toUpperCase()}${option.id.slice(1)}`] || d3.symbolCircle
+                              )
+                              .size(100)()
+                            }
+                            fill="#333"
+                            stroke="#333"
+                            strokeWidth="0.5"
+                          />
+                        )}
+                      </svg>
+                      <span>{option.label}</span>
+                    </div>
                   ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="form-group">
+                <label htmlFor="lineStyleSelect">Line Style:</label>
+                <select
+                  id="lineStyleSelect"
+                  value={lineStyle}
+                  onChange={(e) => setLineStyle(e.target.value)}
+                  className="line-style-select"
+                >
+                  <option value="solid">Solid</option>
+                  <option value="dashed">Dashed</option>
+                  <option value="dotted">Dotted</option>
                 </select>
               </div>
             </>
@@ -222,7 +299,7 @@ const ColorPickerModal = ({
         </div>
       </div>
       
-      <style jsx>{`
+      <style>{`
         .modal-backdrop {
           position: absolute;
           top: 0;
@@ -334,4 +411,4 @@ const ColorPickerModal = ({
   );
 };
 
-export default ColorPickerModal; 
+export default ColorPickerModal;

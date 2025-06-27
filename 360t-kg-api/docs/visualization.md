@@ -1,78 +1,68 @@
-# 360T Knowledge Graph - Visualization Guide
+# Graph Visualization Guide
 
-This guide provides comprehensive instructions for visualizing the 360T Knowledge Graph using the Neo4j Browser.
+This guide provides a comprehensive overview of the interactive graph visualization features within the 360T Knowledge Graph application. The visualization is powered by D3.js and offers a rich, interactive experience for exploring your data.
 
-## Neo4j Browser Access
+## The Interactive Graph
 
-To access the Neo4j Browser:
+The main feature of the visualization is the interactive, force-directed graph. It's designed to help you discover connections and explore relationships in your data intuitively.
 
-1. Open your web browser and navigate to `http://localhost:7474` (or your configured Neo4j server address)
-2. Login with your Neo4j credentials (default: username `neo4j`, password as configured during setup)
-3. You will be presented with the Neo4j Browser interface
+### Basic Interactions
 
-## Basic Visualization
+You can interact with the graph in several ways:
 
-### Viewing All Nodes
+*   **Zoom**: Use your mouse wheel to zoom in and out.
+*   **Pan**: Click and drag on an empty area of the canvas to move the entire graph.
+*   **Drag Nodes**: Click and drag any node to reposition it. The simulation will temporarily be affected, but you can rearrange the graph to your liking.
 
-To view all nodes in the knowledge graph:
+### Node Details
 
-```cypher
-MATCH (n)
-RETURN n
-LIMIT 300
-```
+- **Click a node**: A single click on any node will select it and display its details in the "Node Details" panel. This panel shows the node's type, properties, and other relevant information.
 
-> **Note**: Limiting results is recommended for large graphs to maintain performance.
+## Customizing the Visualization
 
-### Viewing the Complete Graph
+The visualization is highly customizable. You can control the appearance of nodes and relationships to suit your needs. These settings can be managed through the UI and are saved locally in your browser.
 
-To view all nodes and relationships:
+### Node Appearance
 
-```cypher
-MATCH (n)-[r]->(m)
-RETURN n, r, m
-LIMIT 300
-```
+Nodes are styled based on their type. You can customize the color, size, and shape of each node type.
 
-### Viewing Specific Node Types
+*   **Node Colors**: Each node type is assigned a default color. You can change these colors in the Legend.
+*   **Node Sizes**: The size of a node can be adjusted to represent its importance or any other metric.
+*   **Node Shapes**: Different node types can be assigned different shapes (e.g., circles, squares, triangles) for easier identification.
 
-To view all nodes of a specific type:
+### Relationship Appearance
 
-```cypher
-MATCH (n:Module)
-RETURN n
-```
+Relationships (or links) between nodes can also be styled:
 
-## Styling the Visualization
+*   **Relationship Colors**: Different types of relationships are assigned different colors.
+*   **Relationship Styles**: Relationships can be represented by solid or dashed lines to indicate different types of connections (e.g., a "requires" relationship might be a solid line, while a "related to" relationship might be dashed).
 
-### Basic Styling
+## The Legend
 
-Neo4j Browser automatically applies different colors to different node labels. You can customize this using Cypher queries:
+The legend provides a key to the visual language of the graph. It shows you what the different colors, shapes, and line styles mean.
 
-```cypher
-MATCH (n:Module)
-RETURN n
-```
+### Showing and Hiding the Legend
 
-After running the query, click on the node style button in the visualization panel to modify:
-- Node colors
-- Node sizes
-- Relationship colors and widths
+- Use the **"Show Legend"** button, located at the bottom-right of the screen, to toggle the visibility of the legend.
 
-### Advanced Styling with Cypher
+### Customizing Styles from the Legend
 
-Apply custom styling directly in your queries:
+The legend is not just for viewing; it's also interactive. You can click on items in the legend to customize their styles. For example, you can click on a node type in the legend to open a color picker and change its color.
 
-```cypher
-// Color modules by status
-MATCH (n:Module)
-RETURN n,
-CASE n.status
-  WHEN 'active' THEN '#00AA00'
-  WHEN 'deprecated' THEN '#AA0000'
-  ELSE '#AAAAAA'
-END AS color
-```
+## Managing Your Configuration
+
+Your custom styles and other visualization settings are saved as a configuration. You can manage this configuration using the buttons at the bottom-left of the screen.
+
+*   **Export Config**: Click this button to save your current settings (node colors, sizes, shapes, etc.) to a JSON file. This is useful for backing up your settings or sharing them with others.
+*   **Import Config**: Click this button to load a previously exported configuration file. This will replace your current settings with the ones from the file.
+*   **Reset Config**: Click this button to restore all visualization settings to their default values.
+
+## Performance Considerations
+
+For very large graphs, rendering performance can be a consideration. The application is optimized for performance, but if you experience slowness, consider the following:
+
+*   **Filter Your Data**: Before visualizing, try to filter your data to show only the nodes and relationships you are interested in.
+*   **Hardware Acceleration**: Ensure your browser has hardware acceleration enabled for the best performance.
 
 ## Useful Visualization Queries
 

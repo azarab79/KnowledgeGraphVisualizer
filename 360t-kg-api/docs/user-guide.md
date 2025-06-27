@@ -72,52 +72,34 @@ The dashboard is divided into several key areas:
 - **Field-Specific Search**: Use field:value format (type:module name:trading)
 - **Wildcards**: Use * for multiple characters, ? for single character
 
-## Visualization Features
+## Interactive Graph Visualization
 
-### Creating a New Visualization
+The application features a powerful, interactive graph visualization to help you explore your data.
 
-1. From the dashboard, click on **Visualizations** in the navigation menu
-2. Click **New Visualization**
-3. Select a visualization type:
-   - Module Dependencies
-   - Product Components
-   - Test Coverage
-   - UI Navigation Flow
-   - Configuration Impact
-4. Enter the starting node (e.g., module name)
-5. Set the depth of relationships (1-3)
-6. Click **Generate**
+### Interacting with the Graph
 
-### Interacting with Visualizations
+*   **Zoom and Pan**: Use your mouse wheel to zoom and click-and-drag on the background to pan.
+*   **Reposition Nodes**: Click and drag any node to move it.
+*   **View Node Details**: Single-click a node to see its properties in the details panel.
 
-- **Zoom**: Use the mouse wheel or pinch gesture
-- **Pan**: Click and drag in empty space
-- **Select Nodes**: Click on a node to see details
-- **Expand Node**: Double-click a node to expand its relationships
-- **Hide Node**: Right-click and select "Hide"
-- **Focus on Node**: Right-click and select "Focus"
+For more details, see the [Graph Visualization Guide](./visualization.md).
 
-### Customizing Visualizations
+### Using the Legend
 
-1. Click the **Style** button in the visualization toolbar
-2. Customize:
-   - Node colors (by type or property)
-   - Node size (by importance or connections)
-   - Relationship thickness
-   - Labels visibility
-   - Layout algorithm
-3. Click **Apply** to update the visualization
+The legend helps you understand what the different colors and shapes in the graph represent.
 
-### Saving and Sharing Visualizations
+*   **Toggle Legend**: Click the **"Show Legend"** button at the bottom-right to show or hide it.
+*   **Interactive Styles**: You can click on items in the legend to customize the color and style of different node and relationship types.
 
-1. Click the **Save** button in the visualization toolbar
-2. Enter a name and optional description
-3. Choose visibility (Private or Shared)
-4. Click **Save**
-5. To share, click **Share** and:
-   - Copy the direct link
-   - Generate an export file
-   - Schedule as a report
+### Managing Visualization Configuration
+
+You can export, import, and reset your custom visualization settings.
+
+*   **Export Config**: Saves your current style settings to a JSON file.
+*   **Import Config**: Loads style settings from a JSON file.
+*   **Reset Config**: Restores the default styles.
+
+These controls are located at the bottom-left of the screen.
 
 ## Working with Reports
 

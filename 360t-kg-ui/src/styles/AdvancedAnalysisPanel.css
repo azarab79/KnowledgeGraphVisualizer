@@ -1,0 +1,41 @@
+.advanced-analysis {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #e2e8f0;
+}
+.tabs button {
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.tabs button.active {
+  border-bottom: 3px solid #3182ce;
+  font-weight: bold;
+}
+.split-pane {
+  flex: 1;
+  display: flex;
+}
+.left-pane {
+  width: 250px;
+  border-right: 1px solid #e2e8f0;
+  padding: 12px;
+}
+.right-pane {
+  flex: 1;
+  padding: 12px;
+  overflow: auto;
+}
+.controls label {
+  display: block;
+  margin-bottom: 12px;
+}
+.summary {
+  margin-bottom: 12px;
+  font-weight: bold;
+} 

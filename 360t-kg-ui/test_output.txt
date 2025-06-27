@@ -1,0 +1,1091 @@
+
+> 360t-kg-ui@0.1.0 test
+> jest --verbose
+
+FAIL src/__tests__/App.test.jsx
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    /Users/sbiro/Documents/Trainings/KnowledgeGraphVisualizer/360t-kg-ui/src/assets/logos/360T-logo.png:1
+    ({"Object.<anonymous>":function(module,exports,require,__dirname,__filename,jest){�PNG
+                                                                                      
+
+    SyntaxError: Invalid or unexpected token
+
+      2 | import { getInitialGraph } from '../services/api';
+      3 | import '../styles/360t-theme.css';
+    > 4 | import logo from '../assets/logos/360T-logo.png';
+        | ^
+      5 |
+      6 | /**
+      7 |  * Header component with logo, title and main navigation
+
+      at Runtime.createScriptFromCode (node_modules/jest-runtime/build/index.js:1505:14)
+      at Object.require (src/components/Header.jsx:4:1)
+      at Object.require (src/App.jsx:3:1)
+      at Object.require (src/__tests__/App.test.jsx:13:1)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: nodeShapes updated: {
+      Module: 'square',
+      Product: 'triangle',
+      Workflow: 'diamond',
+      UI_Area: 'circle',
+      ConfigurationItem: 'star',
+      TestCase: 'wye',
+      Default: 'circle'
+    }
+
+      at log (src/components/GraphView.jsx:735:13)
+
+  console.log
+    Drawing initial graph with: {
+      nodes: 2,
+      links: 1,
+      colors: {
+        Module: '#4f46e5',
+        Product: '#059669',
+        Workflow: '#d97706',
+        UI_Area: '#7c3aed',
+        ConfigurationItem: '#db2777',
+        TestCase: '#dc2626',
+        Default: '#4b5563'
+      },
+      shapes: {
+        Module: 'square',
+        Product: 'triangle',
+        Workflow: 'diamond',
+        UI_Area: 'circle',
+        ConfigurationItem: 'star',
+        TestCase: 'wye',
+        Default: 'circle'
+      }
+    }
+
+      at log (src/components/GraphView.jsx:746:15)
+
+  console.log
+    relationshipLineStyles object: {}
+
+      at log (src/components/GraphView.jsx:323:13)
+
+  console.log
+    getRelationshipDashArray for type USES style: undefined
+
+      at log (src/components/GraphView.jsx:326:13)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: State change detected, updating appearances
+
+      at log (src/components/GraphView.jsx:640:15)
+
+  console.log
+    - nodeColors changed: {
+      Module: '#4f46e5',
+      Product: '#059669',
+      Workflow: '#d97706',
+      UI_Area: '#7c3aed',
+      ConfigurationItem: '#db2777',
+      TestCase: '#dc2626',
+      Default: '#4b5563'
+    }
+
+      at log (src/components/GraphView.jsx:641:15)
+
+  console.log
+    - nodeSizes changed: {
+      Module: 20,
+      Product: 20,
+      Workflow: 20,
+      UI_Area: 20,
+      ConfigurationItem: 20,
+      TestCase: 20,
+      Default: 20
+    }
+
+      at log (src/components/GraphView.jsx:642:15)
+
+  console.log
+    - relationshipColors changed: {
+      USES: '#00973A',
+      CONTAINS: '#ec4899',
+      NAVIGATES_TO: '#8b5cf6',
+      VALIDATES: '#f59e0b',
+      REQUIRES: '#ef4444',
+      CONFIGURES_IN: '#06b6d4',
+      DISPLAYS: '#f97316',
+      Default: '#64748b'
+    }
+
+      at log (src/components/GraphView.jsx:643:15)
+
+  console.log
+    ColorPickerModal: Size slider changed to 30 for type Module
+
+      at log (src/components/ColorPickerModal.jsx:131:13)
+
+  console.log
+    ColorPickerModal: Applying changes for Module: { color: '#654321', size: 30, shape: 'circle' }
+
+      at log (src/components/ColorPickerModal.jsx:142:13)
+
+  console.log
+    ColorPickerModal: Applying changes for Module: { color: '#4f46e5', size: 20, shape: 'square' }
+
+      at log (src/components/ColorPickerModal.jsx:142:13)
+
+PASS src/__tests__/ColorPickerModal.test.jsx
+  ColorPickerModal
+    ✓ renders modal with initial values (38 ms)
+    ✓ calls onClose when Cancel button is clicked (14 ms)
+    ✓ calls onApply with correct data when Apply button is clicked (43 ms)
+    ✓ renders without crashing for relationship type (isNodeType=false) (7 ms)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: Received updated customConfig: { relationshipLineStyles: { USES: 'dashed' } }
+
+      at log (src/components/GraphView.jsx:686:15)
+
+  console.log
+    GraphView: Updating relationship line styles
+
+      at log (src/components/GraphView.jsx:724:17)
+
+  console.log
+    Legend: Applying changes from modal for Module: { color: '#4f46e5', size: 20, shape: 'square' }
+
+      at log (src/components/Legend.jsx:147:13)
+
+  console.log
+    GraphView: nodeShapes updated: {
+      Module: 'square',
+      Product: 'triangle',
+      Workflow: 'diamond',
+      UI_Area: 'circle',
+      ConfigurationItem: 'star',
+      TestCase: 'wye',
+      Default: 'circle'
+    }
+
+      at log (src/components/GraphView.jsx:735:13)
+
+  console.log
+    Drawing initial graph with: {
+      nodes: 2,
+      links: 1,
+      colors: {
+        Module: '#4f46e5',
+        Product: '#059669',
+        Workflow: '#d97706',
+        UI_Area: '#7c3aed',
+        ConfigurationItem: '#db2777',
+        TestCase: '#dc2626',
+        Default: '#4b5563'
+      },
+      shapes: {
+        Module: 'square',
+        Product: 'triangle',
+        Workflow: 'diamond',
+        UI_Area: 'circle',
+        ConfigurationItem: 'star',
+        TestCase: 'wye',
+        Default: 'circle'
+      }
+    }
+
+      at log (src/components/GraphView.jsx:746:15)
+
+  console.log
+    Legend: Notifying parent with specific changes for Module {
+      colors: {
+        Module: '#4f46e5',
+        Product: '#059669',
+        Workflow: '#d97706',
+        UI_Area: '#7c3aed',
+        ConfigurationItem: '#db2777',
+        TestCase: '#dc2626',
+        Default: '#4b5563'
+      },
+      sizes: {
+        Module: 20,
+        Product: 20,
+        Workflow: 20,
+        UI_Area: 20,
+        ConfigurationItem: 20,
+        TestCase: 20,
+        Default: 20
+      },
+      shapes: {
+        Module: 'square',
+        Product: 'triangle',
+        Workflow: 'diamond',
+        UI_Area: 'circle',
+        ConfigurationItem: 'star',
+        TestCase: 'wye',
+        Default: 'circle'
+      },
+      relationshipLineStyles: {}
+    }
+
+      at log (src/components/Legend.jsx:207:17)
+
+  console.log
+    relationshipLineStyles object: {}
+
+      at log (src/components/GraphView.jsx:323:13)
+
+  console.log
+    getRelationshipDashArray for type USES style: undefined
+
+      at log (src/components/GraphView.jsx:326:13)
+
+PASS src/__tests__/Legend.test.jsx
+  Legend
+    ✓ renders node and relationship badges (23 ms)
+    ✓ calls onClose when close button is clicked (21 ms)
+    ✓ opens ColorPickerModal when node badge is clicked (21 ms)
+    ✓ opens ColorPickerModal when relationship badge is clicked (6 ms)
+    ✓ calls onNodeConfigChange when modal applies changes (39 ms)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: State change detected, updating appearances
+
+      at log (src/components/GraphView.jsx:640:15)
+
+  console.log
+    - nodeColors changed: {
+      Module: '#4f46e5',
+      Product: '#059669',
+      Workflow: '#d97706',
+      UI_Area: '#7c3aed',
+      ConfigurationItem: '#db2777',
+      TestCase: '#dc2626',
+      Default: '#4b5563'
+    }
+
+      at log (src/components/GraphView.jsx:641:15)
+
+  console.log
+    - nodeSizes changed: {
+      Module: 20,
+      Product: 20,
+      Workflow: 20,
+      UI_Area: 20,
+      ConfigurationItem: 20,
+      TestCase: 20,
+      Default: 20
+    }
+
+      at log (src/components/GraphView.jsx:642:15)
+
+  console.log
+    - relationshipColors changed: {
+      USES: '#00973A',
+      CONTAINS: '#ec4899',
+      NAVIGATES_TO: '#8b5cf6',
+      VALIDATES: '#f59e0b',
+      REQUIRES: '#ef4444',
+      CONFIGURES_IN: '#06b6d4',
+      DISPLAYS: '#f97316',
+      Default: '#64748b'
+    }
+
+      at log (src/components/GraphView.jsx:643:15)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: State change detected, updating appearances
+
+      at log (src/components/GraphView.jsx:640:15)
+
+  console.log
+    - nodeColors changed: {
+      Module: '#4f46e5',
+      Product: '#059669',
+      Workflow: '#d97706',
+      UI_Area: '#7c3aed',
+      ConfigurationItem: '#db2777',
+      TestCase: '#dc2626',
+      Default: '#4b5563'
+    }
+
+      at log (src/components/GraphView.jsx:641:15)
+
+  console.log
+    - nodeSizes changed: {
+      Module: 20,
+      Product: 20,
+      Workflow: 20,
+      UI_Area: 20,
+      ConfigurationItem: 20,
+      TestCase: 20,
+      Default: 20
+    }
+
+      at log (src/components/GraphView.jsx:642:15)
+
+  console.log
+    - relationshipColors changed: {
+      USES: '#00973A',
+      CONTAINS: '#ec4899',
+      NAVIGATES_TO: '#8b5cf6',
+      VALIDATES: '#f59e0b',
+      REQUIRES: '#ef4444',
+      CONFIGURES_IN: '#06b6d4',
+      DISPLAYS: '#f97316',
+      Default: '#64748b'
+    }
+
+      at log (src/components/GraphView.jsx:643:15)
+
+  console.log
+    GraphView: Received updated customConfig: { relationshipLineStyles: { USES: 'dashed' } }
+
+      at log (src/components/GraphView.jsx:686:15)
+
+  console.log
+    GraphView: Updating relationship line styles
+
+      at log (src/components/GraphView.jsx:724:17)
+
+  console.log
+    Drawing initial graph with: {
+      nodes: 2,
+      links: 1,
+      colors: {
+        Module: '#4f46e5',
+        Product: '#059669',
+        Workflow: '#d97706',
+        UI_Area: '#7c3aed',
+        ConfigurationItem: '#db2777',
+        TestCase: '#dc2626',
+        Default: '#4b5563'
+      },
+      shapes: {
+        Module: 'square',
+        Product: 'triangle',
+        Workflow: 'diamond',
+        UI_Area: 'circle',
+        ConfigurationItem: 'star',
+        TestCase: 'wye',
+        Default: 'circle'
+      }
+    }
+
+      at log (src/components/GraphView.jsx:746:15)
+
+  console.log
+    relationshipLineStyles object: { USES: 'dashed' }
+
+      at log (src/components/GraphView.jsx:323:13)
+
+  console.log
+    getRelationshipDashArray for type USES style: dashed
+
+      at log (src/components/GraphView.jsx:326:13)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: State change detected, updating appearances
+
+      at log (src/components/GraphView.jsx:640:15)
+
+  console.log
+    - nodeColors changed: {
+      Module: '#4f46e5',
+      Product: '#059669',
+      Workflow: '#d97706',
+      UI_Area: '#7c3aed',
+      ConfigurationItem: '#db2777',
+      TestCase: '#dc2626',
+      Default: '#4b5563'
+    }
+
+      at log (src/components/GraphView.jsx:641:15)
+
+  console.log
+    - nodeSizes changed: {
+      Module: 20,
+      Product: 20,
+      Workflow: 20,
+      UI_Area: 20,
+      ConfigurationItem: 20,
+      TestCase: 20,
+      Default: 20
+    }
+
+      at log (src/components/GraphView.jsx:642:15)
+
+  console.log
+    - relationshipColors changed: {
+      USES: '#00973A',
+      CONTAINS: '#ec4899',
+      NAVIGATES_TO: '#8b5cf6',
+      VALIDATES: '#f59e0b',
+      REQUIRES: '#ef4444',
+      CONFIGURES_IN: '#06b6d4',
+      DISPLAYS: '#f97316',
+      Default: '#64748b'
+    }
+
+      at log (src/components/GraphView.jsx:643:15)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: Received updated customConfig: { relationshipLineStyles: { USES: 'dotted' } }
+
+      at log (src/components/GraphView.jsx:686:15)
+
+  console.log
+    GraphView: Updating relationship line styles
+
+      at log (src/components/GraphView.jsx:724:17)
+
+  console.log
+    GraphView: nodeShapes updated: {
+      Module: 'square',
+      Product: 'triangle',
+      Workflow: 'diamond',
+      UI_Area: 'circle',
+      ConfigurationItem: 'star',
+      TestCase: 'wye',
+      Default: 'circle'
+    }
+
+      at log (src/components/GraphView.jsx:735:13)
+
+  console.log
+    Drawing initial graph with: {
+      nodes: 2,
+      links: 1,
+      colors: {
+        Module: '#4f46e5',
+        Product: '#059669',
+        Workflow: '#d97706',
+        UI_Area: '#7c3aed',
+        ConfigurationItem: '#db2777',
+        TestCase: '#dc2626',
+        Default: '#4b5563'
+      },
+      shapes: {
+        Module: 'square',
+        Product: 'triangle',
+        Workflow: 'diamond',
+        UI_Area: 'circle',
+        ConfigurationItem: 'star',
+        TestCase: 'wye',
+        Default: 'circle'
+      }
+    }
+
+      at log (src/components/GraphView.jsx:746:15)
+
+  console.log
+    relationshipLineStyles object: {}
+
+      at log (src/components/GraphView.jsx:323:13)
+
+  console.log
+    getRelationshipDashArray for type USES style: undefined
+
+      at log (src/components/GraphView.jsx:326:13)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: State change detected, updating appearances
+
+      at log (src/components/GraphView.jsx:640:15)
+
+  console.log
+    - nodeColors changed: {
+      Module: '#4f46e5',
+      Product: '#059669',
+      Workflow: '#d97706',
+      UI_Area: '#7c3aed',
+      ConfigurationItem: '#db2777',
+      TestCase: '#dc2626',
+      Default: '#4b5563'
+    }
+
+      at log (src/components/GraphView.jsx:641:15)
+
+  console.log
+    - nodeSizes changed: {
+      Module: 20,
+      Product: 20,
+      Workflow: 20,
+      UI_Area: 20,
+      ConfigurationItem: 20,
+      TestCase: 20,
+      Default: 20
+    }
+
+      at log (src/components/GraphView.jsx:642:15)
+
+  console.log
+    - relationshipColors changed: {
+      USES: '#00973A',
+      CONTAINS: '#ec4899',
+      NAVIGATES_TO: '#8b5cf6',
+      VALIDATES: '#f59e0b',
+      REQUIRES: '#ef4444',
+      CONFIGURES_IN: '#06b6d4',
+      DISPLAYS: '#f97316',
+      Default: '#64748b'
+    }
+
+      at log (src/components/GraphView.jsx:643:15)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: State change detected, updating appearances
+
+      at log (src/components/GraphView.jsx:640:15)
+
+  console.log
+    - nodeColors changed: {
+      Module: '#4f46e5',
+      Product: '#059669',
+      Workflow: '#d97706',
+      UI_Area: '#7c3aed',
+      ConfigurationItem: '#db2777',
+      TestCase: '#dc2626',
+      Default: '#4b5563'
+    }
+
+      at log (src/components/GraphView.jsx:641:15)
+
+  console.log
+    - nodeSizes changed: {
+      Module: 20,
+      Product: 20,
+      Workflow: 20,
+      UI_Area: 20,
+      ConfigurationItem: 20,
+      TestCase: 20,
+      Default: 20
+    }
+
+      at log (src/components/GraphView.jsx:642:15)
+
+  console.log
+    - relationshipColors changed: {
+      USES: '#00973A',
+      CONTAINS: '#ec4899',
+      NAVIGATES_TO: '#8b5cf6',
+      VALIDATES: '#f59e0b',
+      REQUIRES: '#ef4444',
+      CONFIGURES_IN: '#06b6d4',
+      DISPLAYS: '#f97316',
+      Default: '#64748b'
+    }
+
+      at log (src/components/GraphView.jsx:643:15)
+
+  console.log
+    GraphView: Received updated customConfig: { relationshipLineStyles: { USES: 'dotted' } }
+
+      at log (src/components/GraphView.jsx:686:15)
+
+  console.log
+    GraphView: Updating relationship line styles
+
+      at log (src/components/GraphView.jsx:724:17)
+
+  console.log
+    Drawing initial graph with: {
+      nodes: 2,
+      links: 1,
+      colors: {
+        Module: '#4f46e5',
+        Product: '#059669',
+        Workflow: '#d97706',
+        UI_Area: '#7c3aed',
+        ConfigurationItem: '#db2777',
+        TestCase: '#dc2626',
+        Default: '#4b5563'
+      },
+      shapes: {
+        Module: 'square',
+        Product: 'triangle',
+        Workflow: 'diamond',
+        UI_Area: 'circle',
+        ConfigurationItem: 'star',
+        TestCase: 'wye',
+        Default: 'circle'
+      }
+    }
+
+      at log (src/components/GraphView.jsx:746:15)
+
+  console.log
+    relationshipLineStyles object: { USES: 'dotted' }
+
+      at log (src/components/GraphView.jsx:323:13)
+
+  console.log
+    getRelationshipDashArray for type USES style: dotted
+
+      at log (src/components/GraphView.jsx:326:13)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: State change detected, updating appearances
+
+      at log (src/components/GraphView.jsx:640:15)
+
+  console.log
+    - nodeColors changed: {
+      Module: '#4f46e5',
+      Product: '#059669',
+      Workflow: '#d97706',
+      UI_Area: '#7c3aed',
+      ConfigurationItem: '#db2777',
+      TestCase: '#dc2626',
+      Default: '#4b5563'
+    }
+
+      at log (src/components/GraphView.jsx:641:15)
+
+  console.log
+    - nodeSizes changed: {
+      Module: 20,
+      Product: 20,
+      Workflow: 20,
+      UI_Area: 20,
+      ConfigurationItem: 20,
+      TestCase: 20,
+      Default: 20
+    }
+
+      at log (src/components/GraphView.jsx:642:15)
+
+  console.log
+    - relationshipColors changed: {
+      USES: '#00973A',
+      CONTAINS: '#ec4899',
+      NAVIGATES_TO: '#8b5cf6',
+      VALIDATES: '#f59e0b',
+      REQUIRES: '#ef4444',
+      CONFIGURES_IN: '#06b6d4',
+      DISPLAYS: '#f97316',
+      Default: '#64748b'
+    }
+
+      at log (src/components/GraphView.jsx:643:15)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: Received updated customConfig: { relationshipLineStyles: { USES: 'solid' } }
+
+      at log (src/components/GraphView.jsx:686:15)
+
+  console.log
+    GraphView: Updating relationship line styles
+
+      at log (src/components/GraphView.jsx:724:17)
+
+  console.log
+    GraphView: nodeShapes updated: {
+      Module: 'square',
+      Product: 'triangle',
+      Workflow: 'diamond',
+      UI_Area: 'circle',
+      ConfigurationItem: 'star',
+      TestCase: 'wye',
+      Default: 'circle'
+    }
+
+      at log (src/components/GraphView.jsx:735:13)
+
+  console.log
+    Drawing initial graph with: {
+      nodes: 2,
+      links: 1,
+      colors: {
+        Module: '#4f46e5',
+        Product: '#059669',
+        Workflow: '#d97706',
+        UI_Area: '#7c3aed',
+        ConfigurationItem: '#db2777',
+        TestCase: '#dc2626',
+        Default: '#4b5563'
+      },
+      shapes: {
+        Module: 'square',
+        Product: 'triangle',
+        Workflow: 'diamond',
+        UI_Area: 'circle',
+        ConfigurationItem: 'star',
+        TestCase: 'wye',
+        Default: 'circle'
+      }
+    }
+
+      at log (src/components/GraphView.jsx:746:15)
+
+  console.log
+    relationshipLineStyles object: {}
+
+      at log (src/components/GraphView.jsx:323:13)
+
+  console.log
+    getRelationshipDashArray for type USES style: undefined
+
+      at log (src/components/GraphView.jsx:326:13)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: State change detected, updating appearances
+
+      at log (src/components/GraphView.jsx:640:15)
+
+  console.log
+    - nodeColors changed: {
+      Module: '#4f46e5',
+      Product: '#059669',
+      Workflow: '#d97706',
+      UI_Area: '#7c3aed',
+      ConfigurationItem: '#db2777',
+      TestCase: '#dc2626',
+      Default: '#4b5563'
+    }
+
+      at log (src/components/GraphView.jsx:641:15)
+
+  console.log
+    - nodeSizes changed: {
+      Module: 20,
+      Product: 20,
+      Workflow: 20,
+      UI_Area: 20,
+      ConfigurationItem: 20,
+      TestCase: 20,
+      Default: 20
+    }
+
+      at log (src/components/GraphView.jsx:642:15)
+
+  console.log
+    - relationshipColors changed: {
+      USES: '#00973A',
+      CONTAINS: '#ec4899',
+      NAVIGATES_TO: '#8b5cf6',
+      VALIDATES: '#f59e0b',
+      REQUIRES: '#ef4444',
+      CONFIGURES_IN: '#06b6d4',
+      DISPLAYS: '#f97316',
+      Default: '#64748b'
+    }
+
+      at log (src/components/GraphView.jsx:643:15)
+
+  console.log
+    GraphView: nodeShapes updated: {
+      Module: 'square',
+      Product: 'triangle',
+      Workflow: 'diamond',
+      UI_Area: 'circle',
+      ConfigurationItem: 'star',
+      TestCase: 'wye',
+      Default: 'circle'
+    }
+
+      at log (src/components/GraphView.jsx:735:13)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: nodeShapes updated: {
+      Module: 'square',
+      Product: 'triangle',
+      Workflow: 'diamond',
+      UI_Area: 'circle',
+      ConfigurationItem: 'star',
+      TestCase: 'wye',
+      Default: 'circle'
+    }
+
+      at log (src/components/GraphView.jsx:735:13)
+
+  console.log
+    Drawing initial graph with: {
+      nodes: 2,
+      links: 1,
+      colors: {
+        Module: '#4f46e5',
+        Product: '#059669',
+        Workflow: '#d97706',
+        UI_Area: '#7c3aed',
+        ConfigurationItem: '#db2777',
+        TestCase: '#dc2626',
+        Default: '#4b5563'
+      },
+      shapes: {
+        Module: 'square',
+        Product: 'triangle',
+        Workflow: 'diamond',
+        UI_Area: 'circle',
+        ConfigurationItem: 'star',
+        TestCase: 'wye',
+        Default: 'circle'
+      }
+    }
+
+      at log (src/components/GraphView.jsx:746:15)
+
+  console.log
+    relationshipLineStyles object: {}
+
+      at log (src/components/GraphView.jsx:323:13)
+
+  console.log
+    getRelationshipDashArray for type USES style: undefined
+
+      at log (src/components/GraphView.jsx:326:13)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: State change detected, updating appearances
+
+      at log (src/components/GraphView.jsx:640:15)
+
+  console.log
+    - nodeColors changed: {
+      Module: '#4f46e5',
+      Product: '#059669',
+      Workflow: '#d97706',
+      UI_Area: '#7c3aed',
+      ConfigurationItem: '#db2777',
+      TestCase: '#dc2626',
+      Default: '#4b5563'
+    }
+
+      at log (src/components/GraphView.jsx:641:15)
+
+  console.log
+    - nodeSizes changed: {
+      Module: 20,
+      Product: 20,
+      Workflow: 20,
+      UI_Area: 20,
+      ConfigurationItem: 20,
+      TestCase: 20,
+      Default: 20
+    }
+
+      at log (src/components/GraphView.jsx:642:15)
+
+  console.log
+    - relationshipColors changed: {
+      USES: '#00973A',
+      CONTAINS: '#ec4899',
+      NAVIGATES_TO: '#8b5cf6',
+      VALIDATES: '#f59e0b',
+      REQUIRES: '#ef4444',
+      CONFIGURES_IN: '#06b6d4',
+      DISPLAYS: '#f97316',
+      Default: '#64748b'
+    }
+
+      at log (src/components/GraphView.jsx:643:15)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: nodeShapes updated: {
+      Module: 'square',
+      Product: 'triangle',
+      Workflow: 'diamond',
+      UI_Area: 'circle',
+      ConfigurationItem: 'star',
+      TestCase: 'wye',
+      Default: 'circle'
+    }
+
+      at log (src/components/GraphView.jsx:735:13)
+
+  console.log
+    Drawing initial graph with: {
+      nodes: 2,
+      links: 1,
+      colors: {
+        Module: '#4f46e5',
+        Product: '#059669',
+        Workflow: '#d97706',
+        UI_Area: '#7c3aed',
+        ConfigurationItem: '#db2777',
+        TestCase: '#dc2626',
+        Default: '#4b5563'
+      },
+      shapes: {
+        Module: 'square',
+        Product: 'triangle',
+        Workflow: 'diamond',
+        UI_Area: 'circle',
+        ConfigurationItem: 'star',
+        TestCase: 'wye',
+        Default: 'circle'
+      }
+    }
+
+      at log (src/components/GraphView.jsx:746:15)
+
+  console.log
+    relationshipLineStyles object: {}
+
+      at log (src/components/GraphView.jsx:323:13)
+
+  console.log
+    getRelationshipDashArray for type USES style: undefined
+
+      at log (src/components/GraphView.jsx:326:13)
+
+  console.log
+    GraphView: nodeShapes changed, need to ensure shapes are updated
+
+      at log (src/components/GraphView.jsx:623:15)
+
+  console.log
+    GraphView: State change detected, updating appearances
+
+      at log (src/components/GraphView.jsx:640:15)
+
+  console.log
+    - nodeColors changed: {
+      Module: '#4f46e5',
+      Product: '#059669',
+      Workflow: '#d97706',
+      UI_Area: '#7c3aed',
+      ConfigurationItem: '#db2777',
+      TestCase: '#dc2626',
+      Default: '#4b5563'
+    }
+
+      at log (src/components/GraphView.jsx:641:15)
+
+  console.log
+    - nodeSizes changed: {
+      Module: 20,
+      Product: 20,
+      Workflow: 20,
+      UI_Area: 20,
+      ConfigurationItem: 20,
+      TestCase: 20,
+      Default: 20
+    }
+
+      at log (src/components/GraphView.jsx:642:15)
+
+  console.log
+    - relationshipColors changed: {
+      USES: '#00973A',
+      CONTAINS: '#ec4899',
+      NAVIGATES_TO: '#8b5cf6',
+      VALIDATES: '#f59e0b',
+      REQUIRES: '#ef4444',
+      CONFIGURES_IN: '#06b6d4',
+      DISPLAYS: '#f97316',
+      Default: '#64748b'
+    }
+
+      at log (src/components/GraphView.jsx:643:15)
+
+PASS src/__tests__/GraphView.test.jsx
+  GraphView
+    ✓ renders without crashing with data (97 ms)
+    ✓ applies dashed line style to relationships (26 ms)
+    ✓ applies dotted line style to relationships (20 ms)
+    ✓ applies solid line style to relationships (9 ms)
+    ✓ shows placeholder when no data (2 ms)
+    ✓ toggles legend visibility (26 ms)
+    ✓ calls onNodeSelect when node is clicked (9 ms)
+
+Test Suites: 1 failed, 3 passed, 4 total
+Tests:       16 passed, 16 total
+Snapshots:   0 total
+Time:        1.965 s, estimated 3 s
+Ran all test suites.
